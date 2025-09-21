@@ -1,4 +1,4 @@
-
+# app/main.py (update existing file)
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -8,9 +8,11 @@ from datetime import datetime
 
 # Import our modules
 from app.config import settings
-from app.auth.sso_middleware import SSOAuthMiddleware
-from app.api import proposals, questions, users, admin
+from app.auth.sso_middleware import ApprovedUserMiddleware
+from app.api import proposals, questions, users, admin, admin_read
 from app.core.logging import setup_logging
+from app.database import init_database
+from app.api import proposals, questions, users, admin, admin_read, secure_links
 
 # Setup logging
 setup_logging()
@@ -19,16 +21,26 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting Proposal Portal API with SSO")
+    logger.info("Starting Proposal Portal API with SSO User Validation")
+    
+    # Initialize database
+    try:
+        init_database()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        raise
+    
     yield
+    
     # Shutdown
     logger.info("Shutting down Proposal Portal API")
 
 # Create FastAPI app
 app = FastAPI(
     title="Proposal Portal API",
-    description="SSO-enabled API for B2B event planning proposal management",
-    version="2.0.0",
+    description="SSO-enabled API with pre-approved user validation",
+    version="2.1.0",
     lifespan=lifespan,
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
@@ -36,6 +48,7 @@ app = FastAPI(
 
 # Add middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins_list,
@@ -44,19 +57,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add SSO middleware
+# Add SSO middleware with user validation
 app.add_middleware(
-    SSOAuthMiddleware,
-    provider_name=settings.SSO_PROVIDER,
-    exempt_paths=["/health", "/docs", "/redoc", "/openapi.json", "/"]
+    ApprovedUserMiddleware,
+    exempt_paths=["/health", "/docs", "/redoc", "/openapi.json", "/", "/admin/approved-users", "/admin/user-stats"]
 )
 
 # Include routers
-
 app.include_router(questions.router, prefix="/api/v1", tags=["questions"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 app.include_router(proposals.router, prefix="/api/v1", tags=["proposals"])
+app.include_router(admin_read.router, prefix="/api/v1", tags=["admin-read"])
+# Include the new router
+app.include_router(secure_links.router, prefix="/api/v1", tags=["secure-links"])
 
 @app.get("/health")
 async def health_check():
@@ -64,17 +78,19 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "version": "2.0.0",
-        "environment": settings.ENVIRONMENT
+        "version": "2.1.0",
+        "environment": settings.ENVIRONMENT,
+        "features": ["sso_validation", "user_approval"]
     }
 
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
-        "message": "Proposal Portal API with SSO",
+        "message": "Proposal Portal API with SSO User Validation",
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "version": "2.1.0"
     }
 
 if __name__ == "__main__":

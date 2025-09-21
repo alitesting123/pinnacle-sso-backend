@@ -1,4 +1,4 @@
-
+# app/config.py (update existing file)
 from pydantic_settings import BaseSettings
 from typing import List
 import os
@@ -15,23 +15,14 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     
-    # SSO
-    SSO_PROVIDER: str = "azure"
-    SSO_SECRET_KEY: str = "sso-verification-key"
+    # AWS Cognito Configuration
+    AWS_REGION: str = "us-east-1"
+    COGNITO_USER_POOL_ID: str = ""
+    COGNITO_CLIENT_ID: str = ""
+    COGNITO_CLIENT_SECRET: str = ""
     
-    # Azure AD
-    AZURE_TENANT_ID: str = ""
-    AZURE_CLIENT_ID: str = ""
-    AZURE_CLIENT_SECRET: str = ""
-    
-    # Google
-    GOOGLE_CLIENT_ID: str = ""
-    GOOGLE_CLIENT_SECRET: str = ""
-    
-    # Okta
-    OKTA_DOMAIN: str = ""
-    OKTA_CLIENT_ID: str = ""
-    OKTA_CLIENT_SECRET: str = ""
+    # Frontend URL for secure links
+    FRONTEND_BASE_URL: str = "http://localhost:3000"
     
     # CORS - Handle as comma-separated string
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
