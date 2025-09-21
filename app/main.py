@@ -70,6 +70,7 @@ app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 app.include_router(proposals.router, prefix="/api/v1", tags=["proposals"])
 app.include_router(admin_read.router, prefix="/api/v1", tags=["admin-read"])
 # Include the new router
+
 app.include_router(secure_links.router, prefix="/api/v1", tags=["secure-links"])
 
 @app.get("/health")

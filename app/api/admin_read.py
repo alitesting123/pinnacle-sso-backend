@@ -1,10 +1,10 @@
-# app/api/admin_read.py
+# app/api/admin_read.py - Complete corrected file
 from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.users import PreApprovedUser, User
-from typing import List
-from pydantic import BaseModel
+from typing import List, Optional
+from pydantic import BaseModel  # This import was missing!
 from datetime import datetime
 
 router = APIRouter()
@@ -12,14 +12,14 @@ router = APIRouter()
 class ApprovedUserResponse(BaseModel):
     id: str
     email: str
-    full_name: str = None
-    company: str = None
-    department: str = None
+    full_name: Optional[str] = None
+    company: Optional[str] = None
+    department: Optional[str] = None
     roles: List[str]
     is_active: bool
-    created_at: datetime = None
+    created_at: Optional[datetime] = None
     has_logged_in: bool
-    last_login: datetime = None
+    last_login: Optional[datetime] = None  # Made Optional
 
 class UserStatsResponse(BaseModel):
     total_approved: int
@@ -44,7 +44,7 @@ async def list_approved_users(db: Session = Depends(get_db)):
             is_active=user.is_active,
             created_at=user.created_at,
             has_logged_in=bool(user.cognito_user_id),
-            last_login=user.last_login
+            last_login=user.last_login  # This can now be None
         )
         for user in users
     ]
