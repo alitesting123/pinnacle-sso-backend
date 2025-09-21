@@ -1,11 +1,10 @@
 # app/api/secure_links.py
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import secrets
-import json
 from app.database import get_db
 from app.models.users import PreApprovedUser
 from app.api.proposals import COMPLETE_MOCK_PROPOSAL
@@ -26,7 +25,7 @@ CUSTOMER_PROPOSALS = {
             "preparedBy": "Shahar Zlochover",
             "email": "shahar.zlochover@pinnaclelive.com"
         },
-        "totalCost": 95000  # Different pricing for internal client
+        "totalCost": 95000
     },
     "client@customer.com": {
         **COMPLETE_MOCK_PROPOSAL,
@@ -38,16 +37,15 @@ CUSTOMER_PROPOSALS = {
             "email": "shahar.zlochover@pinnaclelive.com"
         },
         "sections": [
-            # Enhanced proposal for external client
             {
                 "id": "audio",
                 "title": "Premium Audio Equipment",
                 "isExpanded": True,
-                "total": 25000,  # Upgraded pricing
+                "total": 25000,
                 "items": [
                     {
                         "id": "audio-1",
-                        "quantity": 24,  # More equipment
+                        "quantity": 24,
                         "description": "Premium Line Array Speaker System",
                         "duration": "3 Days",
                         "price": 350,
@@ -59,7 +57,29 @@ CUSTOMER_PROPOSALS = {
                 ]
             }
         ],
-        "totalCost": 120000  # Premium pricing for external client
+        "totalCost": 120000
+    },
+    "manager@company.com": {
+        **COMPLETE_MOCK_PROPOSAL,
+        "eventDetails": {
+            **COMPLETE_MOCK_PROPOSAL["eventDetails"],
+            "clientName": "Event Manager Project",
+            "venue": "Conference Center - Hall A",
+            "preparedBy": "Shahar Zlochover",
+            "email": "shahar.zlochover@pinnaclelive.com"
+        },
+        "totalCost": 85000
+    },
+    "user@company.com": {
+        **COMPLETE_MOCK_PROPOSAL,
+        "eventDetails": {
+            **COMPLETE_MOCK_PROPOSAL["eventDetails"],
+            "clientName": "Standard Corporate Event",
+            "venue": "Meeting Room - Business Center",
+            "preparedBy": "Shahar Zlochover",
+            "email": "shahar.zlochover@pinnaclelive.com"
+        },
+        "totalCost": 75000
     }
 }
 
@@ -81,7 +101,6 @@ class GenerateLinkResponse(BaseModel):
 async def generate_secure_link(
     proposal_id: str,
     request_data: GenerateLinkRequest,
-    request: Request,
     db: Session = Depends(get_db)
 ):
     """Generate a secure link for proposal access"""
@@ -98,13 +117,8 @@ async def generate_secure_link(
             detail=f"User {request_data.user_email} is not authorized to access proposals"
         )
     
-    # Check if customer has a specific proposal
-    if request_data.user_email not in CUSTOMER_PROPOSALS:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No proposal found for customer {request_data.user_email}"
-        )
-    
+    # For this demo, we'll generate links for all approved users
+    # In production, you'd check if customer has a specific proposal
     token = secrets.token_urlsafe(48)
     expires_at = datetime.utcnow() + timedelta(hours=request_data.expires_in_hours)
     
@@ -134,22 +148,29 @@ async def generate_secure_link(
         proposal_id=proposal_id
     )
 
-def get_customer_proposal_from_database(proposal_id: str, customer_email: str, db: Session) -> Dict[str, Any]:
-    """Get customer-specific proposal data from database"""
+def get_customer_proposal_from_database(proposal_id: str, customer_email: str) -> Dict[str, Any]:
+    """Get customer-specific proposal data"""
     
-    proposal = db.query(CustomerProposal).filter(
-        CustomerProposal.customer_email == customer_email,
-        CustomerProposal.status == "active"
-    ).first()
+    # Check if customer has a custom proposal
+    if customer_email in CUSTOMER_PROPOSALS:
+        proposal = CUSTOMER_PROPOSALS[customer_email].copy()
+        
+        # Customize proposal details for this specific customer
+        proposal["eventDetails"]["jobNumber"] = proposal_id
+        proposal["eventDetails"]["lastModified"] = datetime.utcnow().isoformat()
+        
+        return proposal
     
-    if proposal:
-        return proposal.proposal_data
+    # Return default proposal if no custom one exists
+    default_proposal = COMPLETE_MOCK_PROPOSAL.copy()
+    default_proposal["eventDetails"]["jobNumber"] = proposal_id
+    default_proposal["eventDetails"]["clientName"] = f"Proposal for {customer_email}"
+    default_proposal["eventDetails"]["lastModified"] = datetime.utcnow().isoformat()
     
-    # Return default if no custom proposal exists
-    return COMPLETE_MOCK_PROPOSAL
+    return default_proposal
 
 @router.get("/secure-proposals/{token}")
-async def access_secure_proposal(token: str, request: Request, db: Session = Depends(get_db)):
+async def access_secure_proposal(token: str, db: Session = Depends(get_db)):
     """Access proposal via secure token with database validation"""
     
     link_data = secure_links_storage.get(token)
@@ -218,7 +239,7 @@ async def access_secure_proposal(token: str, request: Request, db: Session = Dep
     }
 
 @router.delete("/secure-links/{token}")
-async def revoke_secure_link(token: str, request: Request):
+async def revoke_secure_link(token: str):
     """Revoke a secure link"""
     
     if token in secure_links_storage:
@@ -229,7 +250,7 @@ async def revoke_secure_link(token: str, request: Request):
         raise HTTPException(status_code=404, detail="Link not found")
 
 @router.get("/admin/secure-links")
-async def list_active_links(db: Session = Depends(get_db)):
+async def list_active_links():
     """List all active secure links (admin endpoint)"""
     
     active_links = [
