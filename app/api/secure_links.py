@@ -5,36 +5,84 @@ from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import secrets
+import hashlib
+import logging
 from app.database import get_db
 from app.models.users import PreApprovedUser
-from app.api.proposals import COMPLETE_MOCK_PROPOSAL
+from app.config import settings
+from app.services.email_service import email_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# In-memory storage for demo (replace with database in production)
-secure_links_storage = {}
+# In-memory storage for active sessions (use Redis in production)
+active_sessions = {}
+temp_links = {}
 
 # Mock customer-specific proposal data
 CUSTOMER_PROPOSALS = {
     "admin@company.com": {
-        **COMPLETE_MOCK_PROPOSAL,
         "eventDetails": {
-            **COMPLETE_MOCK_PROPOSAL["eventDetails"],
+            "jobNumber": "306780",
             "clientName": "Internal Systems Upgrade",
             "venue": "Company Headquarters - Main Conference Room",
+            "startDate": "2026-05-31",
+            "endDate": "2026-06-03",
             "preparedBy": "Shahar Zlochover",
-            "email": "shahar.zlochover@pinnaclelive.com"
+            "email": "shahar.zlochover@pinnaclelive.com",
+            "status": "tentative",
+            "version": "1.0",
+            "lastModified": "2025-09-12T13:46:00Z"
         },
-        "totalCost": 95000
+        "sections": [
+            {
+                "id": "audio",
+                "title": "Audio Equipment",
+                "isExpanded": True,
+                "total": 18750,
+                "items": [
+                    {
+                        "id": "audio-1",
+                        "quantity": 18,
+                        "description": "12\" Line Array Speaker",
+                        "duration": "3 Days",
+                        "price": 250,
+                        "discount": 0,
+                        "subtotal": 13500,
+                        "category": "audio",
+                        "notes": "3 stacks of 3 tops and one sub for front speakers"
+                    }
+                ]
+            }
+        ],
+        "totalCost": 95000,
+        "timeline": [
+            {
+                "id": "setup-day-1",
+                "date": "2026-05-31",
+                "startTime": "08:00",
+                "endTime": "18:00",
+                "title": "Load-in & Setup",
+                "location": "Company Headquarters",
+                "setup": ["Audio rigging", "Testing"],
+                "equipment": ["Audio"],
+                "cost": 12500
+            }
+        ]
     },
     "client@customer.com": {
-        **COMPLETE_MOCK_PROPOSAL,
         "eventDetails": {
-            **COMPLETE_MOCK_PROPOSAL["eventDetails"],
+            "jobNumber": "306781",
             "clientName": "Customer Corp Annual Meeting",
             "venue": "Grand Ballroom - Luxury Hotel",
+            "startDate": "2026-06-01",
+            "endDate": "2026-06-03",
             "preparedBy": "Shahar Zlochover",
-            "email": "shahar.zlochover@pinnaclelive.com"
+            "email": "shahar.zlochover@pinnaclelive.com",
+            "status": "confirmed",
+            "version": "2.0",
+            "lastModified": "2025-09-12T13:46:00Z"
         },
         "sections": [
             {
@@ -57,96 +105,223 @@ CUSTOMER_PROPOSALS = {
                 ]
             }
         ],
-        "totalCost": 120000
-    },
-    "manager@company.com": {
-        **COMPLETE_MOCK_PROPOSAL,
-        "eventDetails": {
-            **COMPLETE_MOCK_PROPOSAL["eventDetails"],
-            "clientName": "Event Manager Project",
-            "venue": "Conference Center - Hall A",
-            "preparedBy": "Shahar Zlochover",
-            "email": "shahar.zlochover@pinnaclelive.com"
-        },
-        "totalCost": 85000
-    },
-    "user@company.com": {
-        **COMPLETE_MOCK_PROPOSAL,
-        "eventDetails": {
-            **COMPLETE_MOCK_PROPOSAL["eventDetails"],
-            "clientName": "Standard Corporate Event",
-            "venue": "Meeting Room - Business Center",
-            "preparedBy": "Shahar Zlochover",
-            "email": "shahar.zlochover@pinnaclelive.com"
-        },
-        "totalCost": 75000
+        "totalCost": 120000,
+        "timeline": [
+            {
+                "id": "setup-day-1",
+                "date": "2026-06-01",
+                "startTime": "08:00",
+                "endTime": "18:00",
+                "title": "Load-in & Setup",
+                "location": "Grand Ballroom",
+                "setup": ["Premium audio setup", "Executive testing"],
+                "equipment": ["Premium Audio"],
+                "cost": 25000
+            }
+        ]
     }
 }
 
-class GenerateLinkRequest(BaseModel):
+class GenerateTempLinkRequest(BaseModel):
     user_email: EmailStr
-    user_name: Optional[str] = None
-    company: Optional[str] = None
-    expires_in_hours: int = 24
-    permissions: List[str] = ["view", "comment"]
+    proposal_id: str = "306780"
+    session_duration_minutes: float = 20  # Changed to float
 
-class GenerateLinkResponse(BaseModel):
-    url: str
+class TempLinkResponse(BaseModel):
+    temp_url: str
     token: str
     expires_at: str
-    customer_email: str
-    proposal_id: str
+    session_duration_minutes: float  # Changed to float
 
-@router.post("/proposals/{proposal_id}/generate-link", response_model=GenerateLinkResponse)
-async def generate_secure_link(
-    proposal_id: str,
-    request_data: GenerateLinkRequest,
+class SessionInfo(BaseModel):
+    session_id: str
+    user_email: str
+    user_name: str
+    company: Optional[str]
+    expires_at: str
+    time_remaining_minutes: int
+
+@router.post("/proposals/generate-temp-link", response_model=TempLinkResponse)
+async def generate_temp_link(
+    request_data: GenerateTempLinkRequest,
     db: Session = Depends(get_db)
 ):
-    """Generate a secure link for proposal access"""
+    """Generate a temporary access link for pre-approved client"""
     
-    # Validate that the user is pre-approved
-    pre_approved = db.query(PreApprovedUser).filter(
+    # Validate client is pre-approved
+    client = db.query(PreApprovedUser).filter(
         PreApprovedUser.email == request_data.user_email,
         PreApprovedUser.is_active == True
     ).first()
     
-    if not pre_approved:
+    if not client:
         raise HTTPException(
-            status_code=403, 
-            detail=f"User {request_data.user_email} is not authorized to access proposals"
+            status_code=404,
+            detail=f"Client {request_data.user_email} not found in approved users"
         )
     
-    # For this demo, we'll generate links for all approved users
-    # In production, you'd check if customer has a specific proposal
-    token = secrets.token_urlsafe(48)
-    expires_at = datetime.utcnow() + timedelta(hours=request_data.expires_in_hours)
+    # Generate secure token (long random string)
+    timestamp = str(int(datetime.utcnow().timestamp()))
+    random_part = secrets.token_urlsafe(32)
+    client_hash = hashlib.sha256(request_data.user_email.encode()).hexdigest()[:8]
     
-    link_data = {
-        "token": token,
-        "proposal_id": proposal_id,
+    # Create long token: timestamp_clienthash_randomstring
+    token = f"{timestamp}_{client_hash}_{random_part}"
+    
+    expires_at = datetime.utcnow() + timedelta(minutes=request_data.session_duration_minutes)
+    
+    # Store temporary link data
+    temp_links[token] = {
         "user_email": request_data.user_email,
-        "user_name": request_data.user_name or pre_approved.full_name,
-        "company": request_data.company or pre_approved.company,
-        "permissions": request_data.permissions,
-        "expires_at": expires_at,
+        "user_name": client.full_name or request_data.user_email.split('@')[0],
+        "company": client.company,
+        "proposal_id": request_data.proposal_id,
         "created_at": datetime.utcnow(),
+        "expires_at": expires_at,
+        "session_duration": request_data.session_duration_minutes,
         "is_active": True,
-        "pre_approved_user_id": pre_approved.id
+        "click_count": 0
     }
     
-    secure_links_storage[token] = link_data
+    # Generate the temporary URL with long token
+    temp_url = f"{settings.FRONTEND_BASE_URL}/temp-access?t={token}"
     
-    # Generate frontend URL
-    frontend_url = f"http://localhost:3000/secure/{token}"
+    # Send email to client
+    try:
+        email_sent = await email_service.send_temp_access_email(
+            recipient_email=request_data.user_email,
+            client_name=client.full_name or request_data.user_email,
+            temp_access_url=temp_url,
+            proposal_id=request_data.proposal_id
+        )
+        
+        if email_sent:
+            logger.info(f"Email sent successfully to {request_data.user_email}")
+        else:
+            logger.warning(f"Failed to send email to {request_data.user_email}, but link was generated")
+            
+    except Exception as e:
+        logger.error(f"Email service error: {str(e)}")
+        # Continue even if email fails - admin can still copy the link
     
-    return GenerateLinkResponse(
-        url=frontend_url,
+    return TempLinkResponse(
+        temp_url=temp_url,
         token=token,
         expires_at=expires_at.isoformat(),
-        customer_email=request_data.user_email,
-        proposal_id=proposal_id
+        session_duration_minutes=request_data.session_duration_minutes
     )
+
+@router.get("/temp-access/{token}")
+async def validate_temp_access(token: str, db: Session = Depends(get_db)):
+    """Validate temporary access token and create session"""
+    
+    # Check if token exists
+    link_data = temp_links.get(token)
+    if not link_data:
+        raise HTTPException(
+            status_code=404,
+            detail="Invalid or expired access link. Please request a new link."
+        )
+    
+    # Check if link is still active
+    if not link_data["is_active"]:
+        raise HTTPException(
+            status_code=410,
+            detail="This access link has been used. Please request a new link."
+        )
+    
+    # Validate client is still approved
+    client = db.query(PreApprovedUser).filter(
+        PreApprovedUser.email == link_data["user_email"],
+        PreApprovedUser.is_active == True
+    ).first()
+    
+    if not client:
+        raise HTTPException(
+            status_code=403,
+            detail="Client access has been revoked. Please contact support."
+        )
+    
+    # Create session
+    session_id = secrets.token_urlsafe(16)
+    session_expires = datetime.utcnow() + timedelta(minutes=link_data["session_duration"])
+    
+    active_sessions[session_id] = {
+        "user_email": link_data["user_email"],
+        "user_name": client.full_name or link_data["user_name"],
+        "company": client.company or link_data["company"],
+        "proposal_id": link_data["proposal_id"],
+        "created_at": datetime.utcnow(),
+        "expires_at": session_expires,
+        "temp_token": token,
+        "is_active": True
+    }
+    
+    # Update link usage
+    link_data["click_count"] += 1
+    link_data["last_used"] = datetime.utcnow()
+    link_data["is_active"] = False  # One-time use link
+    
+    time_remaining = int((session_expires - datetime.utcnow()).total_seconds() / 60)
+    
+    return {
+        "session_id": session_id,
+        "user": {
+            "email": client.email,
+            "full_name": client.full_name,
+            "company": client.company
+        },
+        "session_expires": session_expires.isoformat(),
+        "time_remaining_minutes": max(0, time_remaining),
+        "proposal_id": link_data["proposal_id"],
+        "message": f"Welcome {client.full_name}! Your session is active for {link_data['session_duration']} minutes."
+    }
+
+@router.get("/proposals/{proposal_id}/temp-session")
+async def get_proposal_with_session(proposal_id: str, session_id: str):
+    """Get proposal data for active temporary session"""
+    
+    session = active_sessions.get(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid session. Please use a new access link."
+        )
+    
+    if not session["is_active"]:
+        raise HTTPException(
+            status_code=410,
+            detail="Session has expired. Please request a new access link."
+        )
+    
+    current_time = datetime.utcnow()
+    if current_time > session["expires_at"]:
+        session["is_active"] = False
+        raise HTTPException(
+            status_code=410,
+            detail="Session has expired. Please request a new access link."
+        )
+    
+    # Get customer-specific proposal
+    proposal = get_customer_proposal_from_database(proposal_id, session["user_email"])
+    
+    # Update session last accessed
+    session["last_accessed"] = current_time
+    
+    time_remaining = int((session["expires_at"] - current_time).total_seconds() / 60)
+    
+    return {
+        **proposal,
+        "session_info": {
+            "user": {
+                "email": session["user_email"],
+                "full_name": session["user_name"],
+                "company": session["company"]
+            },
+            "expires_at": session["expires_at"].isoformat(),
+            "time_remaining_minutes": max(0, time_remaining)
+        }
+    }
 
 def get_customer_proposal_from_database(proposal_id: str, customer_email: str) -> Dict[str, Any]:
     """Get customer-specific proposal data"""
@@ -162,6 +337,8 @@ def get_customer_proposal_from_database(proposal_id: str, customer_email: str) -
         return proposal
     
     # Return default proposal if no custom one exists
+    from app.api.proposals import COMPLETE_MOCK_PROPOSAL
+    
     default_proposal = COMPLETE_MOCK_PROPOSAL.copy()
     default_proposal["eventDetails"]["jobNumber"] = proposal_id
     default_proposal["eventDetails"]["clientName"] = f"Proposal for {customer_email}"
@@ -169,105 +346,125 @@ def get_customer_proposal_from_database(proposal_id: str, customer_email: str) -
     
     return default_proposal
 
-@router.get("/secure-proposals/{token}")
-async def access_secure_proposal(token: str, db: Session = Depends(get_db)):
-    """Access proposal via secure token with database validation"""
-    
-    link_data = secure_links_storage.get(token)
-    
-    if not link_data:
-        raise HTTPException(status_code=404, detail="Invalid or expired link")
-    
-    if not link_data["is_active"]:
-        raise HTTPException(status_code=410, detail="Link has been revoked")
-    
-    if datetime.utcnow() > link_data["expires_at"]:
-        raise HTTPException(status_code=410, detail="Link has expired")
-    
-    # Validate user is still pre-approved in database
-    pre_approved = db.query(PreApprovedUser).filter(
-        PreApprovedUser.email == link_data["user_email"],
-        PreApprovedUser.is_active == True
-    ).first()
-    
-    if not pre_approved:
-        raise HTTPException(
-            status_code=403, 
-            detail="User access has been revoked. Please contact administrator."
-        )
-    
-    # Get customer-specific proposal data
-    try:
-        proposal = get_customer_proposal_from_database(
-            proposal_id=link_data["proposal_id"],
-            customer_email=link_data["user_email"]
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to load proposal data: {str(e)}"
-        )
-    
-    # Create user context from database and link data
-    temp_user = {
-        "user_id": f"secure-{token[:8]}",
-        "email": link_data["user_email"],
-        "full_name": pre_approved.full_name or link_data.get("user_name", "Guest User"),
-        "company": pre_approved.company or link_data.get("company"),
-        "department": pre_approved.department,
-        "roles": ["guest"],
-        "permissions": link_data["permissions"],
-        "access_method": "secure_link"
-    }
-    
-    # Update access tracking
-    link_data["last_accessed"] = datetime.utcnow()
-    link_data["access_count"] = link_data.get("access_count", 0) + 1
-    
-    # Optional: Update database tracking
-    if not pre_approved.last_login:
-        pre_approved.last_login = datetime.utcnow()
-        db.commit()
-    
-    return {
-        **proposal,
-        "user": temp_user,
-        "access_type": "secure_link",
-        "link_expires": link_data["expires_at"].isoformat(),
-        "access_count": link_data["access_count"],
-        "message": f"Welcome {temp_user['full_name']}! Secure proposal access granted."
-    }
-
-@router.delete("/secure-links/{token}")
-async def revoke_secure_link(token: str):
-    """Revoke a secure link"""
-    
-    if token in secure_links_storage:
-        secure_links_storage[token]["is_active"] = False
-        secure_links_storage[token]["revoked_at"] = datetime.utcnow()
-        return {"message": "Link revoked successfully"}
+@router.delete("/temp-sessions/{session_id}")
+async def invalidate_temp_session(session_id: str):
+    """Manually invalidate a temporary session"""
+    if session_id in active_sessions:
+        active_sessions[session_id]["is_active"] = False
+        active_sessions[session_id]["invalidated_at"] = datetime.utcnow()
+        return {"message": "Session invalidated successfully"}
     else:
-        raise HTTPException(status_code=404, detail="Link not found")
+        raise HTTPException(status_code=404, detail="Session not found")
 
-@router.get("/admin/secure-links")
-async def list_active_links():
-    """List all active secure links (admin endpoint)"""
+@router.get("/admin/temp-links")
+async def list_temp_links():
+    """List all temporary links (admin endpoint)"""
     
-    active_links = [
-        {
+    links = []
+    for token, data in temp_links.items():
+        links.append({
             "token": token[:16] + "...",  # Partial token for security
             "user_email": data["user_email"],
+            "user_name": data["user_name"],
+            "company": data["company"],
             "proposal_id": data["proposal_id"],
             "created_at": data["created_at"].isoformat(),
             "expires_at": data["expires_at"].isoformat(),
-            "access_count": data.get("access_count", 0),
-            "is_active": data["is_active"]
-        }
-        for token, data in secure_links_storage.items()
-        if data["is_active"]
-    ]
+            "click_count": data["click_count"],
+            "is_active": data["is_active"],
+            "last_used": data.get("last_used").isoformat() if data.get("last_used") else None
+        })
     
     return {
-        "active_links": active_links,
-        "total_count": len(active_links)
+        "temp_links": links,
+        "total_count": len(links)
+    }
+
+@router.get("/admin/active-sessions")
+async def list_active_sessions():
+    """List all active sessions (admin endpoint)"""
+    
+    sessions = []
+    current_time = datetime.utcnow()
+    
+    for session_id, data in active_sessions.items():
+        if data["is_active"] and current_time <= data["expires_at"]:
+            time_remaining = int((data["expires_at"] - current_time).total_seconds() / 60)
+            sessions.append({
+                "session_id": session_id[:8] + "...",
+                "user_email": data["user_email"],
+                "user_name": data["user_name"],
+                "company": data["company"],
+                "proposal_id": data["proposal_id"],
+                "created_at": data["created_at"].isoformat(),
+                "expires_at": data["expires_at"].isoformat(),
+                "time_remaining_minutes": max(0, time_remaining),
+                "last_accessed": data.get("last_accessed").isoformat() if data.get("last_accessed") else None
+            })
+    
+    return {
+        "active_sessions": sessions,
+        "total_count": len(sessions)
+    }
+
+# Cleanup expired sessions (run periodically)
+@router.post("/admin/cleanup-sessions")
+async def cleanup_expired_sessions():
+    """Clean up expired sessions and links"""
+    
+    current_time = datetime.utcnow()
+    
+    # Clean expired sessions
+    expired_sessions = []
+    for session_id, session_data in list(active_sessions.items()):
+        if current_time > session_data["expires_at"]:
+            expired_sessions.append(session_id)
+            del active_sessions[session_id]
+    
+    # Clean old temp links (older than 24 hours)
+    old_links = []
+    cutoff_time = current_time - timedelta(hours=24)
+    for token, link_data in list(temp_links.items()):
+        if link_data["created_at"] < cutoff_time:
+            old_links.append(token)
+            del temp_links[token]
+    
+    return {
+        "cleaned_sessions": len(expired_sessions),
+        "cleaned_links": len(old_links),
+        "message": "Cleanup completed successfully"
+    }
+@router.post("/temp-sessions/{session_id}/extend")
+async def extend_temp_session(session_id: str):
+    """Extend a temporary session by 10 minutes"""
+    
+    session = active_sessions.get(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found"
+        )
+    
+    if not session["is_active"]:
+        raise HTTPException(
+            status_code=410,
+            detail="Session has expired and cannot be extended"
+        )
+    
+    # Extend by 10 minutes
+    new_expiry = datetime.utcnow() + timedelta(minutes=10)
+    session["expires_at"] = new_expiry
+    session["extended_at"] = datetime.utcnow()
+    session["extension_count"] = session.get("extension_count", 0) + 1
+    
+    time_remaining = int((new_expiry - datetime.utcnow()).total_seconds() / 60)
+    
+    logger.info(f"Session {session_id} extended by 10 minutes. Total extensions: {session['extension_count']}")
+    
+    return {
+        "message": "Session extended successfully",
+        "new_expires_at": new_expiry.isoformat(),
+        "time_remaining_minutes": time_remaining,
+        "extended_by_minutes": 10,
+        "extension_count": session["extension_count"]
     }
