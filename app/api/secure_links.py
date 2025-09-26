@@ -125,7 +125,7 @@ CUSTOMER_PROPOSALS = {
 class GenerateTempLinkRequest(BaseModel):
     user_email: EmailStr
     proposal_id: str = "306780"
-    session_duration_minutes: float = 20  # Changed to float
+    session_duration_minutes: float = 0.5  # Changed to float
 
 class TempLinkResponse(BaseModel):
     temp_url: str
