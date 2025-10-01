@@ -1,419 +1,251 @@
-# app/api/proposals.py - Using the complete mock data structure
-"""Proposals API endpoints"""
+# app/models/proposals.py - Updated to match new database schema
+from sqlalchemy import Column, String, Date, Time, Numeric, Integer, Boolean, DateTime, Text, ARRAY
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
 
-from fastapi import APIRouter, Request
-from typing import List
+Base = declarative_base()
 
-router = APIRouter()
-
-# Complete mock proposal data that matches frontend TypeScript interfaces
-COMPLETE_MOCK_PROPOSAL = {
-    "eventDetails": {
-        "jobNumber": "306780",
-        "clientName": "Customer Relationship Management",
-        "eventLocation": "Omni PGA Frisco Resort",
-        "venue": "Ryder Cup Ballroom DE (GB 4-5)",
-        "startDate": "2026-05-31",
-        "endDate": "2026-06-03",
-        "preparedBy": "Shahar Zlochover",
-        "salesperson": "Shahar Zlochover",
-        "email": "shahar.zlochover@pinnaclelive.com",
-        "status": "tentative",
-        "version": "1.0",
-        "lastModified": "2025-09-12T13:46:00Z"
-    },
-    "sections": [
-        {
-            "id": "audio",
-            "title": "Audio Equipment",
-            "isExpanded": True,
-            "total": 18750,
-            "items": [
-                {
-                    "id": "audio-1",
-                    "quantity": 18,
-                    "description": "12\" Line Array Speaker",
-                    "duration": "3 Days",
-                    "price": 250,
-                    "discount": 0,
-                    "subtotal": 13500,
-                    "category": "audio",
-                    "notes": "3 stacks of 3 tops and one sub for front speakers, 3 Stacks of 3 tops, 3 subs for delay"
-                },
-                {
-                    "id": "audio-2",
-                    "quantity": 6,
-                    "description": "18\" Powered Subwoofer",
-                    "duration": "3 Days",
-                    "price": 180,
-                    "discount": 0,
-                    "subtotal": 3240,
-                    "category": "audio"
-                },
-                {
-                    "id": "audio-3",
-                    "quantity": 4,
-                    "description": "G50 Wireless Microphone Handheld",
-                    "duration": "3 Days",
-                    "price": 65,
-                    "discount": 0,
-                    "subtotal": 780,
-                    "category": "audio"
-                },
-                {
-                    "id": "audio-4",
-                    "quantity": 4,
-                    "description": "Wireless Lavalier Microphone",
-                    "duration": "3 Days",
-                    "price": 75,
-                    "discount": 0,
-                    "subtotal": 900,
-                    "category": "audio"
-                },
-                {
-                    "id": "audio-5",
-                    "quantity": 1,
-                    "description": "24ch Digital Audio Mixer",
-                    "duration": "3 Days",
-                    "price": 330,
-                    "discount": 0,
-                    "subtotal": 990,
-                    "category": "audio"
-                }
-            ]
-        },
-        {
-            "id": "lighting",
-            "title": "Lighting Equipment",
-            "isExpanded": False,
-            "total": 24680,
-            "items": [
-                {
-                    "id": "lighting-1",
-                    "quantity": 24,
-                    "description": "LED Par Can RGBW",
-                    "duration": "3 Days",
-                    "price": 85,
-                    "discount": 0,
-                    "subtotal": 6120,
-                    "category": "lighting"
-                },
-                {
-                    "id": "lighting-2",
-                    "quantity": 8,
-                    "description": "Moving Head Spot Light",
-                    "duration": "3 Days",
-                    "price": 220,
-                    "discount": 0,
-                    "subtotal": 5280,
-                    "category": "lighting"
-                },
-                {
-                    "id": "lighting-3",
-                    "quantity": 4,
-                    "description": "Haze Machine",
-                    "duration": "3 Days",
-                    "price": 150,
-                    "discount": 0,
-                    "subtotal": 1800,
-                    "category": "lighting"
-                },
-                {
-                    "id": "lighting-4",
-                    "quantity": 1,
-                    "description": "Grand MA2 Light Console",
-                    "duration": "3 Days",
-                    "price": 850,
-                    "discount": 0,
-                    "subtotal": 2550,
-                    "category": "lighting"
-                },
-                {
-                    "id": "lighting-5",
-                    "quantity": 50,
-                    "description": "DMX Cable (25ft)",
-                    "duration": "3 Days",
-                    "price": 12,
-                    "discount": 0,
-                    "subtotal": 1800,
-                    "category": "lighting"
-                },
-                {
-                    "id": "lighting-6",
-                    "quantity": 12,
-                    "description": "Truss Section (10ft)",
-                    "duration": "3 Days",
-                    "price": 45,
-                    "discount": 0,
-                    "subtotal": 1620,
-                    "category": "lighting"
-                },
-                {
-                    "id": "lighting-7",
-                    "quantity": 8,
-                    "description": "Power Distribution",
-                    "duration": "3 Days",
-                    "price": 125,
-                    "discount": 0,
-                    "subtotal": 3000,
-                    "category": "lighting"
-                },
-                {
-                    "id": "lighting-8",
-                    "quantity": 4,
-                    "description": "Follow Spot",
-                    "duration": "3 Days",
-                    "price": 380,
-                    "discount": 0,
-                    "subtotal": 4560,
-                    "category": "lighting"
-                }
-            ]
-        },
-        {
-            "id": "video",
-            "title": "Video & Projection",
-            "isExpanded": False,
-            "total": 16800,
-            "items": [
-                {
-                    "id": "video-1",
-                    "quantity": 2,
-                    "description": "20K Lumens Projector",
-                    "duration": "3 Days",
-                    "price": 1200,
-                    "discount": 0,
-                    "subtotal": 7200,
-                    "category": "video"
-                },
-                {
-                    "id": "video-2",
-                    "quantity": 2,
-                    "description": "16x9 Fast-Fold Screen",
-                    "duration": "3 Days",
-                    "price": 450,
-                    "discount": 0,
-                    "subtotal": 2700,
-                    "category": "video"
-                },
-                {
-                    "id": "video-3",
-                    "quantity": 4,
-                    "description": "55\" LED Monitor",
-                    "duration": "3 Days",
-                    "price": 320,
-                    "discount": 0,
-                    "subtotal": 3840,
-                    "category": "video"
-                },
-                {
-                    "id": "video-4",
-                    "quantity": 1,
-                    "description": "Video Switcher",
-                    "duration": "3 Days",
-                    "price": 680,
-                    "discount": 0,
-                    "subtotal": 2040,
-                    "category": "video"
-                },
-                {
-                    "id": "video-5",
-                    "quantity": 8,
-                    "description": "HD-SDI Cable (50ft)",
-                    "duration": "3 Days",
-                    "price": 35,
-                    "discount": 0,
-                    "subtotal": 1050,
-                    "category": "video"
-                }
-            ]
-        },
-        {
-            "id": "staging",
-            "title": "Staging & Set",
-            "isExpanded": False,
-            "total": 8950,
-            "items": [
-                {
-                    "id": "staging-1",
-                    "quantity": 12,
-                    "description": "8x4 Stage Deck",
-                    "duration": "3 Days",
-                    "price": 120,
-                    "discount": 0,
-                    "subtotal": 4320,
-                    "category": "staging"
-                },
-                {
-                    "id": "staging-2",
-                    "quantity": 4,
-                    "description": "Stage Riser (2ft)",
-                    "duration": "3 Days",
-                    "price": 95,
-                    "discount": 0,
-                    "subtotal": 1140,
-                    "category": "staging"
-                },
-                {
-                    "id": "staging-3",
-                    "quantity": 2,
-                    "description": "Acrylic Podium",
-                    "duration": "3 Days",
-                    "price": 180,
-                    "discount": 0,
-                    "subtotal": 1080,
-                    "category": "staging"
-                },
-                {
-                    "id": "staging-4",
-                    "quantity": 8,
-                    "description": "Stage Skirt (Black)",
-                    "duration": "3 Days",
-                    "price": 25,
-                    "discount": 0,
-                    "subtotal": 600,
-                    "category": "staging"
-                },
-                {
-                    "id": "staging-5",
-                    "quantity": 6,
-                    "description": "Pipe & Drape (10ft)",
-                    "duration": "3 Days",
-                    "price": 45,
-                    "discount": 0,
-                    "subtotal": 810,
-                    "category": "staging"
-                },
-                {
-                    "id": "staging-6",
-                    "quantity": 4,
-                    "description": "Backdrop Stand",
-                    "duration": "3 Days",
-                    "price": 75,
-                    "discount": 0,
-                    "subtotal": 900,
-                    "category": "staging"
-                }
-            ]
-        },
-        {
-            "id": "labor",
-            "title": "Labor & Services",
-            "isExpanded": False,
-            "total": 15600,
-            "items": [
-                {
-                    "id": "labor-1",
-                    "quantity": 3,
-                    "description": "Audio Engineer",
-                    "duration": "3 Days",
-                    "price": 850,
-                    "discount": 0,
-                    "subtotal": 7650,
-                    "category": "labor"
-                },
-                {
-                    "id": "labor-2",
-                    "quantity": 2,
-                    "description": "Lighting Technician",
-                    "duration": "3 Days",
-                    "price": 750,
-                    "discount": 0,
-                    "subtotal": 4500,
-                    "category": "labor"
-                },
-                {
-                    "id": "labor-3",
-                    "quantity": 2,
-                    "description": "Video Technician",
-                    "duration": "3 Days",
-                    "price": 780,
-                    "discount": 0,
-                    "subtotal": 4680,
-                    "category": "labor"
-                },
-                {
-                    "id": "labor-4",
-                    "quantity": 4,
-                    "description": "General Labor",
-                    "duration": "3 Days",
-                    "price": 420,
-                    "discount": 0,
-                    "subtotal": 5040,
-                    "category": "labor"
-                }
-            ]
-        }
-    ],
-    "totalCost": 84780,
-    "timeline": [
-        {
-            "id": "setup-day-1",
-            "date": "2026-05-31",
-            "startTime": "08:00",
-            "endTime": "18:00",
-            "title": "Load-in & Setup",
-            "location": "Ryder Cup Ballroom DE",
-            "setup": ["Audio rigging", "Lighting truss installation", "Video setup"],
-            "equipment": ["Audio", "Lighting", "Staging"],
-            "cost": 12500
-        },
-        {
-            "id": "event-day-1",
-            "date": "2026-06-01",
-            "startTime": "07:00",
-            "endTime": "22:00",
-            "title": "Event Day 1",
-            "location": "Ryder Cup Ballroom DE",
-            "setup": ["Final sound check", "Lighting programming", "Video testing"],
-            "equipment": ["Full production"],
-            "cost": 28500
-        },
-        {
-            "id": "event-day-2",
-            "date": "2026-06-02",
-            "startTime": "07:00",
-            "endTime": "22:00",
-            "title": "Event Day 2",
-            "location": "Ryder Cup Ballroom DE",
-            "setup": ["Maintenance check", "Show operation"],
-            "equipment": ["Full production"],
-            "cost": 25400
-        },
-        {
-            "id": "strike",
-            "date": "2026-06-03",
-            "startTime": "08:00",
-            "endTime": "17:00",
-            "title": "Strike & Load-out",
-            "location": "Ryder Cup Ballroom DE",
-            "setup": ["Equipment breakdown", "Load-out"],
-            "equipment": ["All equipment removal"],
-            "cost": 8380
-        }
-    ]
-}
-
-@router.get("/proposals")
-async def get_proposals(request: Request):
-    """Get user's proposals"""
-    user = getattr(request.state, 'user', None)
+class Proposal(Base):
+    """Main proposal/quote table"""
+    __tablename__ = "proposals"
     
-    return {
-        "proposals": [COMPLETE_MOCK_PROPOSAL],
-        "user": user,
-        "total_count": 1,
-        "message": "Proposals retrieved successfully"
-    }
-
-@router.get("/proposals/{proposal_id}")
-async def get_proposal(proposal_id: str, request: Request):
-    """Get specific proposal"""
-    user = getattr(request.state, 'user', None)
+    # Primary key
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     
-    # Return the complete mock data
-    return {
-        **COMPLETE_MOCK_PROPOSAL,
-        "user": user,
-        "message": "Proposal retrieved successfully"
-    }
+    # Job information
+    job_number = Column(String(50), unique=True, nullable=False, index=True)
+    
+    # Client information
+    client_name = Column(String(255), nullable=False)
+    client_email = Column(String(255), index=True)
+    client_company = Column(String(255))
+    client_contact = Column(String(255))
+    client_phone = Column(String(50))
+    
+    # Event details
+    event_location = Column(String(255))
+    venue_name = Column(String(255))
+    start_date = Column(Date, nullable=False, index=True)
+    end_date = Column(Date, nullable=False, index=True)
+    
+    # Proposal metadata
+    prepared_by = Column(String(255))
+    salesperson = Column(String(255))
+    salesperson_email = Column(String(255))
+    status = Column(String(50), default='tentative', index=True)  # tentative, confirmed, cancelled
+    version = Column(String(20), default='1.0')
+    
+    # Pricing breakdown
+    product_subtotal = Column(Numeric(10, 2), default=0)
+    product_discount = Column(Numeric(10, 2), default=0)
+    product_total = Column(Numeric(10, 2), default=0)
+    labor_total = Column(Numeric(10, 2), default=0)
+    service_charge = Column(Numeric(10, 2), default=0)
+    tax_amount = Column(Numeric(10, 2), default=0)
+    total_cost = Column(Numeric(10, 2), nullable=False)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_modified_by = Column(String(255))
+    
+    # Additional fields
+    notes = Column(Text)
+    internal_notes = Column(Text)
+    terms_accepted = Column(Boolean, default=False)
+    terms_accepted_at = Column(DateTime)
+    terms_accepted_by = Column(String(255))
+    
+    # Relationships
+    sections = relationship("ProposalSection", back_populates="proposal", cascade="all, delete-orphan")
+    line_items = relationship("ProposalLineItem", back_populates="proposal", cascade="all, delete-orphan")
+    timeline = relationship("ProposalTimeline", back_populates="proposal", cascade="all, delete-orphan")
+    labor = relationship("ProposalLabor", back_populates="proposal", cascade="all, delete-orphan")
+    questions = relationship("ProposalQuestion", back_populates="proposal", cascade="all, delete-orphan")
+
+
+class ProposalSection(Base):
+    """Proposal sections (Audio, Video, Lighting, etc.)"""
+    __tablename__ = "proposal_sections"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    
+    section_name = Column(String(100), nullable=False)
+    section_type = Column(String(50))  # 'equipment', 'labor', 'services'
+    display_order = Column(Integer, default=0)
+    is_expanded = Column(Boolean, default=True)
+    section_total = Column(Numeric(10, 2), default=0)
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    proposal = relationship("Proposal", back_populates="sections")
+    items = relationship("ProposalLineItem", back_populates="section", cascade="all, delete-orphan")
+
+
+class ProposalLineItem(Base):
+    """Individual line items (equipment, services)"""
+    __tablename__ = "proposal_line_items"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    section_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    
+    # Item details
+    item_number = Column(String(50))
+    description = Column(Text, nullable=False)
+    quantity = Column(Integer, default=1)
+    duration = Column(String(50))  # "1 Days", "3 Days"
+    unit_price = Column(Numeric(10, 2), nullable=False)
+    discount = Column(Numeric(10, 2), default=0)
+    subtotal = Column(Numeric(10, 2), nullable=False)
+    
+    # Categorization
+    category = Column(String(100))  # 'audio', 'video', 'lighting'
+    item_type = Column(String(50))  # 'equipment', 'labor', 'service'
+    
+    # Additional info
+    notes = Column(Text)
+    display_order = Column(Integer, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    section = relationship("ProposalSection", back_populates="items")
+    proposal = relationship("Proposal", back_populates="line_items")
+    questions = relationship("ProposalQuestion", back_populates="line_item")
+
+
+class ProposalTimeline(Base):
+    """Event timeline and schedule"""
+    __tablename__ = "proposal_timeline"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    
+    event_date = Column(Date, nullable=False)
+    start_time = Column(Time)
+    end_time = Column(Time)
+    title = Column(String(255), nullable=False)
+    location = Column(String(255))
+    
+    setup_tasks = Column(ARRAY(Text))
+    equipment_needed = Column(ARRAY(Text))
+    
+    cost = Column(Numeric(10, 2), default=0)
+    display_order = Column(Integer, default=0)
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    proposal = relationship("Proposal", back_populates="timeline")
+
+
+class ProposalLabor(Base):
+    """Labor schedule and costs"""
+    __tablename__ = "proposal_labor"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    
+    task_name = Column(String(255), nullable=False)
+    quantity = Column(Integer, default=1)
+    labor_date = Column(Date, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+    
+    regular_hours = Column(Numeric(5, 2), default=0)
+    overtime_hours = Column(Numeric(5, 2), default=0)
+    double_time_hours = Column(Numeric(5, 2), default=0)
+    
+    hourly_rate = Column(Numeric(10, 2), nullable=False)
+    subtotal = Column(Numeric(10, 2), nullable=False)
+    
+    notes = Column(Text)
+    display_order = Column(Integer, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    proposal = relationship("Proposal", back_populates="labor")
+
+
+class ProposalQuestion(Base):
+    """Client questions about proposal items"""
+    __tablename__ = "proposal_questions"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    line_item_id = Column(UUID(as_uuid=True))
+    
+    question_text = Column(Text, nullable=False)
+    status = Column(String(50), default='pending')  # pending, answered, resolved
+    priority = Column(String(20), default='normal')  # low, normal, high
+    
+    asked_by_name = Column(String(255))
+    asked_by_email = Column(String(255))
+    asked_at = Column(DateTime, default=datetime.utcnow)
+    
+    answer_text = Column(Text)
+    answered_by = Column(String(255))
+    answered_at = Column(DateTime)
+    
+    internal_notes = Column(Text)
+    requires_follow_up = Column(Boolean, default=False)
+    
+    # Relationships
+    proposal = relationship("Proposal", back_populates="questions")
+    line_item = relationship("ProposalLineItem", back_populates="questions")
+
+
+class SecureProposalLink(Base):
+    """Temporary access links for clients"""
+    __tablename__ = "proposal_temp_links"
+    
+    token = Column(String(255), primary_key=True)
+    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    
+    user_email = Column(String(255), nullable=False, index=True)
+    user_name = Column(String(255))
+    company = Column(String(255))
+    
+    permissions = Column(JSONB, default={"permissions": ["view"]})
+    expires_at = Column(DateTime, nullable=False)
+    session_duration_minutes = Column(Integer, default=20)
+    
+    is_active = Column(Boolean, default=True, index=True)
+    access_count = Column(Integer, default=0)
+    last_accessed = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(String(255))
+    
+    revoked_at = Column(DateTime)
+    revoked_by = Column(String(255))
+
+
+class ProposalSession(Base):
+    """Active client viewing sessions"""
+    __tablename__ = "proposal_sessions"
+    
+    session_id = Column(String(255), primary_key=True)
+    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    temp_token = Column(String(255))
+    
+    user_email = Column(String(255), nullable=False)
+    user_name = Column(String(255))
+    company = Column(String(255))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=False)
+    last_accessed = Column(DateTime, default=datetime.utcnow)
+    
+    is_active = Column(Boolean, default=True, index=True)
+    extension_count = Column(Integer, default=0)
