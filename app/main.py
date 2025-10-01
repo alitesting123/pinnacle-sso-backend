@@ -67,12 +67,11 @@ app.add_middleware(
 app.include_router(questions.router, prefix="/api/v1", tags=["questions"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
-app.include_router(proposals.router, prefix="/api/v1", tags=["proposals"])
 app.include_router(admin_read.router, prefix="/api/v1", tags=["admin-read"])
 # Include the new router
 
 app.include_router(secure_links.router, prefix="/api/v1", tags=["secure-links"])
-
+app.include_router(proposals.router, prefix="/api/v1", tags=["proposals"])
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
