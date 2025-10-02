@@ -260,7 +260,7 @@ async def validate_temp_access(token: str, db: Session = Depends(get_db)):
     # Update link usage
     link_data["click_count"] += 1
     link_data["last_used"] = datetime.utcnow()
-    link_data["is_active"] = False  # One-time use link
+    # link_data["is_active"] = False  # One-time use link
     
     time_remaining = int((session_expires - datetime.utcnow()).total_seconds() / 60)
     
@@ -278,7 +278,11 @@ async def validate_temp_access(token: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/proposals/{proposal_id}/temp-session")
-async def get_proposal_with_session(proposal_id: str, session_id: str):
+async def get_proposal_with_session(
+    proposal_id: str, 
+    session_id: str,
+    db: Session = Depends(get_db)
+):
     """Get proposal data for active temporary session"""
     
     session = active_sessions.get(session_id)
@@ -302,8 +306,25 @@ async def get_proposal_with_session(proposal_id: str, session_id: str):
             detail="Session has expired. Please request a new access link."
         )
     
-    # Get customer-specific proposal
-    proposal = get_customer_proposal_from_database(proposal_id, session["user_email"])
+    # Get proposal from database using the same logic as proposals.py
+    from app.api.proposals import get_proposal
+    from fastapi import Request
+    
+    # Create a mock request object with session user info
+    class MockRequest:
+        def __init__(self):
+            self.state = type('obj', (object,), {
+                'user': {
+                    'email': session["user_email"],
+                    'full_name': session["user_name"],
+                    'company': session["company"]
+                }
+            })()
+    
+    mock_request = MockRequest()
+    
+    # Get the full proposal data from database
+    proposal_response = await get_proposal(proposal_id, mock_request, db)
     
     # Update session last accessed
     session["last_accessed"] = current_time
@@ -311,7 +332,7 @@ async def get_proposal_with_session(proposal_id: str, session_id: str):
     time_remaining = int((session["expires_at"] - current_time).total_seconds() / 60)
     
     return {
-        **proposal,
+        **proposal_response,
         "session_info": {
             "user": {
                 "email": session["user_email"],
@@ -322,6 +343,7 @@ async def get_proposal_with_session(proposal_id: str, session_id: str):
             "time_remaining_minutes": max(0, time_remaining)
         }
     }
+
 
 def get_customer_proposal_from_database(proposal_id: str, customer_email: str) -> Dict[str, Any]:
     """Get customer-specific proposal data"""
