@@ -87,16 +87,27 @@ async def get_proposal(
     user = getattr(request.state, 'user', None)
     
     try:
-        # Query proposal by ID or job_number
-        proposal = db.query(Proposal).filter(
-            or_(
-                Proposal.id == proposal_id,
+        # Check if proposal_id is a valid UUID format
+        import uuid
+        try:
+            uuid_obj = uuid.UUID(proposal_id)
+            # If valid UUID, search by ID
+            proposal = db.query(Proposal).filter(
+                Proposal.id == uuid_obj
+            ).first()
+        except ValueError:
+            # Not a valid UUID, search by job_number instead
+            proposal = db.query(Proposal).filter(
                 Proposal.job_number == proposal_id
-            )
-        ).first()
+            ).first()
         
         if not proposal:
-            raise HTTPException(status_code=404, detail=f"Proposal {proposal_id} not found")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Proposal {proposal_id} not found"
+            )
+        
+        # ... rest of your code stays the same
         
         # Get sections with their line items
         sections = db.query(ProposalSection).filter(

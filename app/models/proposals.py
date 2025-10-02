@@ -1,5 +1,5 @@
-# app/models/proposals.py - Complete proposal models matching database schema
-from sqlalchemy import Column, String, Date, Time, Numeric, Integer, Boolean, DateTime, Text, ARRAY
+# app/models/proposals.py - Complete corrected file with ForeignKey constraints
+from sqlalchemy import Column, String, Date, Time, Numeric, Integer, Boolean, DateTime, Text, ARRAY, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from app.models.users import Base  # Use the same Base from users.py
@@ -70,7 +70,7 @@ class ProposalSection(Base):
     __tablename__ = "proposal_sections"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
     
     section_name = Column(String(100), nullable=False)
     section_type = Column(String(50))
@@ -92,8 +92,8 @@ class ProposalLineItem(Base):
     __tablename__ = "proposal_line_items"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    section_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    section_id = Column(UUID(as_uuid=True), ForeignKey('proposal_sections.id'), nullable=False, index=True)
+    proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
     
     # Item details
     item_number = Column(String(50))
@@ -126,7 +126,7 @@ class ProposalTimeline(Base):
     __tablename__ = "proposal_timeline"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
     
     event_date = Column(Date, nullable=False)
     start_time = Column(Time)
@@ -152,7 +152,7 @@ class ProposalLabor(Base):
     __tablename__ = "proposal_labor"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
     
     task_name = Column(String(255), nullable=False)
     quantity = Column(Integer, default=1)
@@ -181,8 +181,8 @@ class ProposalQuestion(Base):
     __tablename__ = "proposal_questions"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    line_item_id = Column(UUID(as_uuid=True))
+    proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
+    line_item_id = Column(UUID(as_uuid=True), ForeignKey('proposal_line_items.id'))
     
     question_text = Column(Text, nullable=False)
     status = Column(String(50), default='pending')
@@ -209,7 +209,7 @@ class SecureProposalLink(Base):
     __tablename__ = "proposal_temp_links"
     
     token = Column(String(255), primary_key=True)
-    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
     
     user_email = Column(String(255), nullable=False, index=True)
     user_name = Column(String(255))
@@ -234,8 +234,8 @@ class ProposalSession(Base):
     __tablename__ = "proposal_sessions"
     
     session_id = Column(String(255), primary_key=True)
-    proposal_id = Column(UUID(as_uuid=True), nullable=False, index=True)
-    temp_token = Column(String(255))
+    proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
+    temp_token = Column(String(255), ForeignKey('proposal_temp_links.token'))
     
     user_email = Column(String(255), nullable=False)
     user_name = Column(String(255))
