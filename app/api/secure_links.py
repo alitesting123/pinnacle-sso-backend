@@ -146,35 +146,40 @@ async def generate_temp_link(
     request_data: GenerateTempLinkRequest,
     db: Session = Depends(get_db)
 ):
-    """Generate a temporary access link for pre-approved client"""
+    """Generate a temporary access link - now works with ANY email"""
     
-    # Validate client is pre-approved
+    recipient_email = request_data.user_email
+    
+    # ✅ NEW: Check if user is pre-approved (optional)
     client = db.query(PreApprovedUser).filter(
-        PreApprovedUser.email == request_data.user_email,
+        PreApprovedUser.email == recipient_email,
         PreApprovedUser.is_active == True
     ).first()
     
+    # ✅ If not pre-approved, create temporary client info
     if not client:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Client {request_data.user_email} not found in approved users"
-        )
+        logger.info(f"Email {recipient_email} not pre-approved, creating temp access anyway")
+        # Use email as fallback for name/company
+        client_name = recipient_email.split('@')[0].title()
+        company = recipient_email.split('@')[1] if '@' in recipient_email else "Guest"
+    else:
+        client_name = client.full_name or recipient_email.split('@')[0].title()
+        company = client.company or "Guest"
     
-    # Generate secure token (long random string)
+    # Generate secure token
     timestamp = str(int(datetime.utcnow().timestamp()))
     random_part = secrets.token_urlsafe(32)
-    client_hash = hashlib.sha256(request_data.user_email.encode()).hexdigest()[:8]
+    client_hash = hashlib.sha256(recipient_email.encode()).hexdigest()[:8]
     
-    # Create long token: timestamp_clienthash_randomstring
     token = f"{timestamp}_{client_hash}_{random_part}"
     
     expires_at = datetime.utcnow() + timedelta(minutes=request_data.session_duration_minutes)
     
     # Store temporary link data
     temp_links[token] = {
-        "user_email": request_data.user_email,
-        "user_name": client.full_name or request_data.user_email.split('@')[0],
-        "company": client.company,
+        "user_email": recipient_email,
+        "user_name": client_name,
+        "company": company,
         "proposal_id": request_data.proposal_id,
         "created_at": datetime.utcnow(),
         "expires_at": expires_at,
@@ -183,26 +188,24 @@ async def generate_temp_link(
         "click_count": 0
     }
     
-    # Generate the temporary URL with long token
     temp_url = f"{settings.FRONTEND_BASE_URL}/temp-access?t={token}"
     
-    # Send email to client
+    # Send email to ANY address
     try:
         email_sent = await email_service.send_temp_access_email(
-            recipient_email=request_data.user_email,
-            client_name=client.full_name or request_data.user_email,
+            recipient_email=recipient_email,  # ✅ Works with test@gmail.com
+            client_name=client_name,
             temp_access_url=temp_url,
             proposal_id=request_data.proposal_id
         )
         
         if email_sent:
-            logger.info(f"Email sent successfully to {request_data.user_email}")
+            logger.info(f"✅ Email sent to {recipient_email}")
         else:
-            logger.warning(f"Failed to send email to {request_data.user_email}, but link was generated")
+            logger.warning(f"⚠️ Email send failed for {recipient_email}")
             
     except Exception as e:
-        logger.error(f"Email service error: {str(e)}")
-        # Continue even if email fails - admin can still copy the link
+        logger.error(f"❌ Email error: {str(e)}")
     
     return TempLinkResponse(
         temp_url=temp_url,
