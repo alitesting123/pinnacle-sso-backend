@@ -59,3 +59,4 @@ uuid==1.30
 
 # Production
 gunicorn==21.2.0
+gunicorn==21.2.0
