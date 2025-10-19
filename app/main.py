@@ -12,7 +12,7 @@ from app.auth.sso_middleware import ApprovedUserMiddleware
 from app.api import proposals, questions, users, admin, admin_read
 from app.core.logging import setup_logging
 from app.database import init_database
-from app.api import proposals, questions, users, admin, admin_read, secure_links
+from app.api import proposals, questions, users, admin, admin_read, secure_links, admin_send_proposal
 
 # Setup logging
 setup_logging()
@@ -68,6 +68,7 @@ app.include_router(questions.router, prefix="/api/v1", tags=["questions"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 app.include_router(admin_read.router, prefix="/api/v1", tags=["admin-read"])
+app.include_router(admin_send_proposal.router, prefix="/api/v1", tags=["admin-email"])
 # Include the new router
 
 app.include_router(secure_links.router, prefix="/api/v1", tags=["secure-links"])
