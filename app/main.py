@@ -105,6 +105,8 @@ app.add_middleware(
         "/api/v1/admin/send-proposal",          # ✅ Add this
         "/api/v1/admin/temp-links",
         "/api/v1/admin/active-sessions",
+        "/api/v1/temp-access/*",         # ✅ Add wildcard
+        "/api/v1/proposals/*/temp-session",  # ✅ For proposal access
     ]
 )
 
