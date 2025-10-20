@@ -26,11 +26,10 @@ class Settings(BaseSettings):
     COGNITO_CLIENT_ID: str = ""
     COGNITO_CLIENT_SECRET: str = ""
     
-    # ✅ UPDATED: Frontend URL
-   # app/config.py
+    # Frontend URL
     FRONTEND_BASE_URL: str = "https://main.dnfe4l5bsjojn.amplifyapp.com"
     
-    # ✅ UPDATED: CORS Origins
+    # CORS Origins
     ALLOWED_ORIGINS: str = "https://main.dnfe4l5bsjojn.amplifyapp.com,https://*.dnfe4l5bsjojn.amplifyapp.com,http://localhost:3000,http://localhost:8080,http://localhost:5173"
     ALLOWED_HOSTS: str = "localhost,127.0.0.1,production-env.eba-qeuwm4sn.us-west-2.elasticbeanstalk.com"
     
@@ -54,6 +53,7 @@ class Settings(BaseSettings):
         env_file = str(ENV_FILE)
         env_file_encoding = 'utf-8'
         case_sensitive = True
+        extra = 'ignore'  # ✅ ADD THIS LINE - allows extra env vars without error
 
 settings = Settings()
 
