@@ -1,4 +1,4 @@
-# app/api/admin.py - COMPLETE FIXED FILE
+# app/api/admin.py - COMPLETE CORRECTED FILE
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
@@ -45,27 +45,22 @@ async def send_proposal_via_email(
 ):
     """
     Send proposal to ANY email address entered by admin
-    
-    CRITICAL: Use request.client_email ONLY - do NOT query database for email
+    Creates a unique temp access link for this client when email is sent
     """
     
     try:
-        # Use the ENTERED email directly - DO NOT query database
-        recipient_email = request.client_email  # ✅ This is the entered email
-        recipient_name = recipient_email.split('@')[0]  # Simple name from email
+        # Use the ENTERED email directly
+        recipient_email = request.client_email
+        recipient_name = recipient_email.split('@')[0].title()
         
         logger.info("=" * 80)
-        logger.info(f"🔍 DEBUG: REQUEST DATA FROM FRONTEND")
-        logger.info(f"   client_email: {request.client_email}")
-        logger.info(f"   proposal_id: {request.proposal_id}")
-        logger.info(f"   admin_email: {request.admin_email}")
-        logger.info("=" * 80)
-        logger.info(f"📧 RECIPIENT EMAIL SET TO: {recipient_email}")
-        logger.info(f"   Admin: {request.admin_email}")
-        logger.info(f"   Proposal: {request.proposal_id}")
+        logger.info(f"📧 SENDING PROPOSAL")
+        logger.info(f"   To: {recipient_email}")
+        logger.info(f"   Proposal ID: {request.proposal_id}")
+        logger.info(f"   From Admin: {request.admin_email}")
         logger.info("=" * 80)
         
-        # Get proposal data (for content, not email address)
+        # Get proposal from database
         proposal = None
         try:
             proposal_uuid = uuid.UUID(request.proposal_id)
@@ -76,6 +71,7 @@ async def send_proposal_via_email(
             ).first()
         
         if not proposal:
+            logger.error(f"❌ Proposal {request.proposal_id} not found")
             raise HTTPException(
                 status_code=404,
                 detail=f"Proposal {request.proposal_id} not found"
@@ -83,17 +79,18 @@ async def send_proposal_via_email(
         
         logger.info(f"✅ Found proposal: {proposal.client_name}")
         
-        # Generate secure token using ENTERED email
+        # ✅ Generate UNIQUE token for THIS client
         timestamp = str(int(datetime.utcnow().timestamp()))
         random_part = secrets.token_urlsafe(32)
         email_hash = hashlib.sha256(recipient_email.encode()).hexdigest()[:8]
         token = f"{timestamp}_{email_hash}_{random_part}"
         
+        # ✅ Set expiration
         expires_at = datetime.utcnow() + timedelta(minutes=request.session_duration_minutes)
         
-        # Store temp link with ENTERED email
+        # ✅ Store token (this creates the temp access link)
         temp_links[token] = {
-            "user_email": recipient_email,  # ✅ ENTERED EMAIL
+            "user_email": recipient_email,
             "user_name": recipient_name,
             "company": None,
             "proposal_id": str(proposal.id),
@@ -105,17 +102,18 @@ async def send_proposal_via_email(
             "sent_by_admin": request.admin_email
         }
         
-        logger.info(f"✅ Token generated for: {recipient_email}")
-        
-        # Generate URL
+        # ✅ Generate the temp access URL
         temp_url = f"{settings.FRONTEND_BASE_URL}/temp-access?t={token}"
         
-        # Send email to ENTERED email address
-        logger.info(f"✅ Queueing email to: {recipient_email}")
+        logger.info(f"✅ Generated temp link: {temp_url[:50]}...")
+        logger.info(f"   Expires in: {request.session_duration_minutes} minutes")
+        
+        # ✅ Send email with clickable link
+        logger.info(f"📤 Queueing email to: {recipient_email}")
         
         background_tasks.add_task(
             email_service.send_temp_access_email,
-            recipient_email=recipient_email,  # ✅ SEND TO ENTERED EMAIL
+            recipient_email=recipient_email,
             recipient_name=recipient_name,
             temp_access_url=temp_url,
             proposal_id=proposal.job_number,
@@ -124,12 +122,12 @@ async def send_proposal_via_email(
             proposal_total_cost=float(proposal.total_cost) if proposal.total_cost else 0
         )
         
-        logger.info(f"✅ Email queued to: {recipient_email}")
+        logger.info(f"✅ Email queued successfully")
         logger.info("=" * 80)
         
         return SendProposalResponse(
             success=True,
-            message=f"✅ Proposal #{proposal.job_number} successfully sent to {recipient_email}",
+            message=f"✅ Proposal #{proposal.job_number} sent to {recipient_email}",
             temp_url=temp_url,
             proposal_info={
                 "job_number": proposal.job_number,
