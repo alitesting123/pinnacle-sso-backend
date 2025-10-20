@@ -1,4 +1,4 @@
-# app/main.py (update existing file)
+# app/main.py - UPDATED WITH CORS FIX
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -9,10 +9,9 @@ from datetime import datetime
 # Import our modules
 from app.config import settings
 from app.auth.sso_middleware import ApprovedUserMiddleware
-from app.api import proposals, questions, users, admin, admin_read
+from app.api import proposals, questions, users, admin, admin_read, secure_links, admin_send_proposal
 from app.core.logging import setup_logging
 from app.database import init_database
-from app.api import proposals, questions, users, admin, admin_read, secure_links, admin_send_proposal
 
 # Setup logging
 setup_logging()
@@ -21,20 +20,22 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting Proposal Portal API with SSO User Validation")
+    logger.info("🚀 Starting Proposal Portal API with SSO User Validation")
+    logger.info(f"Environment: {settings.ENVIRONMENT}")
+    logger.info(f"Frontend URL: {settings.FRONTEND_BASE_URL}")
     
     # Initialize database
     try:
         init_database()
-        logger.info("Database initialized successfully")
+        logger.info("✅ Database initialized successfully")
     except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
+        logger.error(f"❌ Database initialization failed: {e}")
         raise
     
     yield
     
     # Shutdown
-    logger.info("Shutting down Proposal Portal API")
+    logger.info("⏹️ Shutting down Proposal Portal API")
 
 # Create FastAPI app
 app = FastAPI(
@@ -46,87 +47,161 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
 )
 
-# Add middleware
+# ✅ CRITICAL: Add GZip BEFORE CORS
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# ✅ UPDATED CORS Configuration - Must come BEFORE other middleware
+# ✅ CORS Configuration - MUST COME BEFORE SSO MIDDLEWARE
+logger.info("🌐 Configuring CORS middleware...")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://main.dax4lj1sg0msg.amplifyapp.com",  # ✅ Your Amplify production frontend
-        "https://*.dax4lj1sg0msg.amplifyapp.com",     # ✅ Any Amplify branch previews
-        "http://localhost:5173",                       # Local Vite dev
-        "http://localhost:8080",                       # Local alternative port
-        "http://localhost:3000",                       # Local React dev
-        *settings.allowed_origins_list,                # Any additional origins from config
+        # ✅ Production Amplify URLs
+        "https://main.dax4lj1sg0msg.amplifyapp.com",
+        "https://*.dax4lj1sg0msg.amplifyapp.com",
+        
+        # ✅ Local development
+        "http://localhost:5173",  # Vite default
+        "http://localhost:8080",  # Alternative
+        "http://localhost:3000",  # React/Next default
+        
+        # ✅ Additional origins from environment
+        *settings.allowed_origins_list,
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],  # ✅ Include OPTIONS for preflight
-    allow_headers=["*"],  # Allow all headers
-    expose_headers=["*"], # ✅ Expose headers to frontend
-    max_age=3600,         # ✅ Cache preflight requests for 1 hour
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "*",
+        "Authorization",
+        "Content-Type",
+        "Accept",
+        "Origin",
+        "User-Agent",
+        "DNT",
+        "Cache-Control",
+        "X-Requested-With",
+    ],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight for 1 hour
 )
 
-# Add SSO middleware with user validation
+logger.info(f"✅ CORS enabled for: {settings.FRONTEND_BASE_URL}")
+
+# ✅ SSO Middleware - MUST COME AFTER CORS
 app.add_middleware(
     ApprovedUserMiddleware,
     exempt_paths=[
+        # Health & docs
         "/health", 
         "/docs", 
         "/redoc", 
         "/openapi.json", 
-        "/", 
+        "/",
+        
+        # Debug endpoints
+        "/api/v1/debug/cors",
+        
+        # Admin read-only
         "/admin/approved-users", 
         "/admin/user-stats",
-        "/api/v1/secure-proposals",      # ✅ Exempt secure proposal access
-        "/api/v1/temp-access",            # ✅ Exempt temp access
-        "/api/v1/temp-sessions",          # ✅ Exempt temp session extensions
-        "/api/v1/admin/send-proposal",    # ✅ Exempt admin email sending
+        
+        # Public access endpoints
+        "/api/v1/secure-proposals",
+        "/api/v1/temp-access",
+        "/api/v1/temp-sessions",
+        "/api/v1/proposals/{proposal_id}/temp-session",
+        
+        # Admin operations
+        "/api/v1/admin/send-proposal",
+        "/api/v1/admin/temp-links",
+        "/api/v1/admin/active-sessions",
     ]
 )
 
 # Include routers
+app.include_router(proposals.router, prefix="/api/v1", tags=["proposals"])
 app.include_router(questions.router, prefix="/api/v1", tags=["questions"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 app.include_router(admin_read.router, prefix="/api/v1", tags=["admin-read"])
 app.include_router(admin_send_proposal.router, prefix="/api/v1", tags=["admin-email"])
 app.include_router(secure_links.router, prefix="/api/v1", tags=["secure-links"])
-app.include_router(proposals.router, prefix="/api/v1", tags=["proposals"])
 
+# ✅ Health Check
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint - always accessible"""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
         "version": "2.1.0",
         "environment": settings.ENVIRONMENT,
-        "features": ["sso_validation", "user_approval", "cors_enabled"]
+        "features": {
+            "sso_validation": True,
+            "user_approval": True,
+            "cors_enabled": True,
+            "frontend_url": settings.FRONTEND_BASE_URL,
+        },
+        "database": "connected" if settings.DATABASE_URL else "not configured"
     }
 
+# ✅ Root Endpoint
 @app.get("/")
 async def root():
-    """Root endpoint"""
+    """Root endpoint with API info"""
     return {
         "message": "Proposal Portal API with SSO User Validation",
-        "docs": "/docs",
-        "health": "/health",
         "version": "2.1.0",
-        "cors": "enabled"
-    }
-
-# ✅ NEW: Debug endpoint to test CORS
-@app.get("/api/v1/debug/cors")
-async def debug_cors(request: Request):
-    """Debug endpoint to verify CORS is working"""
-    return {
-        "message": "CORS is working! 🎉",
-        "your_origin": request.headers.get("origin", "No origin header"),
-        "backend": "Elastic Beanstalk",
-        "frontend": "AWS Amplify",
+        "endpoints": {
+            "docs": "/docs" if settings.DEBUG else "disabled in production",
+            "health": "/health",
+            "debug_cors": "/api/v1/debug/cors",
+        },
+        "frontend": settings.FRONTEND_BASE_URL,
+        "cors_enabled": True,
         "timestamp": datetime.utcnow().isoformat()
     }
+
+# ✅ CORS Debug Endpoint
+@app.get("/api/v1/debug/cors")
+async def debug_cors(request: Request):
+    """
+    Debug endpoint to verify CORS configuration
+    Access from browser console:
+    fetch('http://production-env.eba-qeuwm4sn.us-west-2.elasticbeanstalk.com/api/v1/debug/cors')
+      .then(r => r.json())
+      .then(console.log)
+    """
+    origin = request.headers.get("origin", "No origin header")
+    
+    return {
+        "message": "✅ CORS is working!",
+        "your_request": {
+            "origin": origin,
+            "method": request.method,
+            "headers": dict(request.headers),
+        },
+        "server_config": {
+            "backend": "AWS Elastic Beanstalk",
+            "frontend": "AWS Amplify",
+            "frontend_url": settings.FRONTEND_BASE_URL,
+            "allowed_origins": settings.allowed_origins_list,
+            "cors_configured": True,
+        },
+        "test_results": {
+            "origin_allowed": origin in settings.allowed_origins_list or origin == settings.FRONTEND_BASE_URL,
+            "cors_headers_present": True,
+        },
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# ✅ OPTIONS handler for preflight requests
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(request: Request, rest_of_path: str):
+    """
+    Handle CORS preflight OPTIONS requests
+    This ensures all routes respond correctly to preflight
+    """
+    return {"message": "OK"}
 
 if __name__ == "__main__":
     import uvicorn

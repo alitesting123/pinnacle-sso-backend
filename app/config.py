@@ -26,12 +26,12 @@ class Settings(BaseSettings):
     COGNITO_CLIENT_ID: str = ""
     COGNITO_CLIENT_SECRET: str = ""
     
-    # Frontend
-    FRONTEND_BASE_URL: str = "http://localhost:3000"
+    # ✅ UPDATED: Frontend URL
+    FRONTEND_BASE_URL: str = "https://main.dax4lj1sg0msg.amplifyapp.com"
     
-    # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8080"
-    ALLOWED_HOSTS: str = "localhost,127.0.0.1"
+    # ✅ UPDATED: CORS Origins
+    ALLOWED_ORIGINS: str = "https://main.dax4lj1sg0msg.amplifyapp.com,https://*.dax4lj1sg0msg.amplifyapp.com,http://localhost:3000,http://localhost:8080,http://localhost:5173"
+    ALLOWED_HOSTS: str = "localhost,127.0.0.1,production-env.eba-qeuwm4sn.us-west-2.elasticbeanstalk.com"
     
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True
@@ -41,10 +41,12 @@ class Settings(BaseSettings):
     
     @property
     def allowed_origins_list(self) -> List[str]:
+        """Parse comma-separated origins into list"""
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
     
     @property
     def allowed_hosts_list(self) -> List[str]:
+        """Parse comma-separated hosts into list"""
         return [host.strip() for host in self.ALLOWED_HOSTS.split(",")]
     
     class Config:
@@ -54,8 +56,10 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Debug print to verify DATABASE_URL is loaded
+# Debug print to verify settings are loaded
 if settings.DEBUG:
     db_url_masked = settings.DATABASE_URL[:30] + "..." if len(settings.DATABASE_URL) > 30 else settings.DATABASE_URL
     print(f"[Config] DATABASE_URL loaded: {db_url_masked}")
     print(f"[Config] Using database: {'PostgreSQL' if 'postgresql' in settings.DATABASE_URL else 'SQLite'}")
+    print(f"[Config] FRONTEND_BASE_URL: {settings.FRONTEND_BASE_URL}")
+    print(f"[Config] ALLOWED_ORIGINS: {len(settings.allowed_origins_list)} origins configured")
