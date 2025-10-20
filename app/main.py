@@ -49,18 +49,40 @@ app = FastAPI(
 # Add middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+# ✅ UPDATED CORS Configuration - Must come BEFORE other middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
+    allow_origins=[
+        "https://main.dax4lj1sg0msg.amplifyapp.com",  # ✅ Your Amplify production frontend
+        "https://*.dax4lj1sg0msg.amplifyapp.com",     # ✅ Any Amplify branch previews
+        "http://localhost:5173",                       # Local Vite dev
+        "http://localhost:8080",                       # Local alternative port
+        "http://localhost:3000",                       # Local React dev
+        *settings.allowed_origins_list,                # Any additional origins from config
+    ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],  # ✅ Include OPTIONS for preflight
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["*"], # ✅ Expose headers to frontend
+    max_age=3600,         # ✅ Cache preflight requests for 1 hour
 )
 
 # Add SSO middleware with user validation
 app.add_middleware(
     ApprovedUserMiddleware,
-    exempt_paths=["/health", "/docs", "/redoc", "/openapi.json", "/", "/admin/approved-users", "/admin/user-stats"]
+    exempt_paths=[
+        "/health", 
+        "/docs", 
+        "/redoc", 
+        "/openapi.json", 
+        "/", 
+        "/admin/approved-users", 
+        "/admin/user-stats",
+        "/api/v1/secure-proposals",      # ✅ Exempt secure proposal access
+        "/api/v1/temp-access",            # ✅ Exempt temp access
+        "/api/v1/temp-sessions",          # ✅ Exempt temp session extensions
+        "/api/v1/admin/send-proposal",    # ✅ Exempt admin email sending
+    ]
 )
 
 # Include routers
@@ -69,10 +91,9 @@ app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(admin.router, prefix="/api/v1", tags=["admin"])
 app.include_router(admin_read.router, prefix="/api/v1", tags=["admin-read"])
 app.include_router(admin_send_proposal.router, prefix="/api/v1", tags=["admin-email"])
-# Include the new router
-
 app.include_router(secure_links.router, prefix="/api/v1", tags=["secure-links"])
 app.include_router(proposals.router, prefix="/api/v1", tags=["proposals"])
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -81,7 +102,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": "2.1.0",
         "environment": settings.ENVIRONMENT,
-        "features": ["sso_validation", "user_approval"]
+        "features": ["sso_validation", "user_approval", "cors_enabled"]
     }
 
 @app.get("/")
@@ -91,7 +112,20 @@ async def root():
         "message": "Proposal Portal API with SSO User Validation",
         "docs": "/docs",
         "health": "/health",
-        "version": "2.1.0"
+        "version": "2.1.0",
+        "cors": "enabled"
+    }
+
+# ✅ NEW: Debug endpoint to test CORS
+@app.get("/api/v1/debug/cors")
+async def debug_cors(request: Request):
+    """Debug endpoint to verify CORS is working"""
+    return {
+        "message": "CORS is working! 🎉",
+        "your_origin": request.headers.get("origin", "No origin header"),
+        "backend": "Elastic Beanstalk",
+        "frontend": "AWS Amplify",
+        "timestamp": datetime.utcnow().isoformat()
     }
 
 if __name__ == "__main__":
