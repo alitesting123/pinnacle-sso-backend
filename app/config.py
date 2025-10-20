@@ -27,10 +27,10 @@ class Settings(BaseSettings):
     COGNITO_CLIENT_SECRET: str = ""
     
     # ✅ UPDATED: Frontend URL
-    FRONTEND_BASE_URL: str = "https://main.dax4lj1sg0msg.amplifyapp.com"
+    FRONTEND_BASE_URL: str = "https://main.dnfe4l5bsjojn.amplifyapp.com"
     
     # ✅ UPDATED: CORS Origins
-    ALLOWED_ORIGINS: str = "https://main.dax4lj1sg0msg.amplifyapp.com,https://*.dax4lj1sg0msg.amplifyapp.com,http://localhost:3000,http://localhost:8080,http://localhost:5173"
+    ALLOWED_ORIGINS: str = "https://main.dnfe4l5bsjojn.amplifyapp.com,https://*.dnfe4l5bsjojn.amplifyapp.com,http://localhost:3000,http://localhost:8080,http://localhost:5173"
     ALLOWED_HOSTS: str = "localhost,127.0.0.1,production-env.eba-qeuwm4sn.us-west-2.elasticbeanstalk.com"
     
     # Rate Limiting

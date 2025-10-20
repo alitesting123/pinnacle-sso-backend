@@ -1,0 +1,2 @@
+Logs were saved to /Users/ifthikaraliseyed/Desktop/UTD_CAPSTONE/pinnacle-sso-backend/.elasticbeanstalk/logs/251020_083534
+Updated symlink at /Users/ifthikaraliseyed/Desktop/UTD_CAPSTONE/pinnacle-sso-backend/.elasticbeanstalk/logs/latest

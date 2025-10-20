@@ -56,8 +56,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         # ✅ Production Amplify URLs
-        "https://main.dax4lj1sg0msg.amplifyapp.com",
-        "https://*.dax4lj1sg0msg.amplifyapp.com",
+        "https://main.dnfe4l5bsjojn.amplifyapp.com/",
+        "https://*.dnfe4l5bsjojn.amplifyapp.com/",
         
         # ✅ Local development
         "http://localhost:5173",  # Vite default
@@ -90,28 +90,19 @@ logger.info(f"✅ CORS enabled for: {settings.FRONTEND_BASE_URL}")
 app.add_middleware(
     ApprovedUserMiddleware,
     exempt_paths=[
-        # Health & docs
         "/health", 
         "/docs", 
         "/redoc", 
         "/openapi.json", 
         "/",
-        
-        # Debug endpoints
         "/api/v1/debug/cors",
-        
-        # Admin read-only
         "/admin/approved-users", 
         "/admin/user-stats",
-        
-        # Public access endpoints
         "/api/v1/secure-proposals",
         "/api/v1/temp-access",
         "/api/v1/temp-sessions",
-        "/api/v1/proposals/{proposal_id}/temp-session",
-        
-        # Admin operations
-        "/api/v1/admin/send-proposal",
+        "/api/v1/proposals",                    # ✅ Add this for testing
+        "/api/v1/admin/send-proposal",          # ✅ Add this
         "/api/v1/admin/temp-links",
         "/api/v1/admin/active-sessions",
     ]
