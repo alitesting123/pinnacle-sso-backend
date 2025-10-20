@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     COGNITO_CLIENT_SECRET: str = ""
     
     # ✅ UPDATED: Frontend URL
+   # app/config.py
     FRONTEND_BASE_URL: str = "https://main.dnfe4l5bsjojn.amplifyapp.com"
     
     # ✅ UPDATED: CORS Origins
