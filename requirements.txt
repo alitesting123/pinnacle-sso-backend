@@ -44,7 +44,7 @@ black==23.11.0
 flake8==6.1.0
 mypy==1.7.1
 isort==5.12.0
-
+pyjwt==2.8.0
 
 # requirements.txt (add these to your existing file)
 # AWS and Cognito
