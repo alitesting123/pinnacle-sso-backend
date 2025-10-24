@@ -118,6 +118,7 @@ app.add_middleware(
         "/api/v1/proposal/access",          # Client validates JWT token
         "/api/v1/admin/send-proposal",      # Admin generates JWT link
         "/api/v1/proposal/token-info",      # Optional: Debug token info
+        "api/v1/proposal/"
     ]
 )
 
