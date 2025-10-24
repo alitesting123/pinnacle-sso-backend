@@ -41,14 +41,16 @@ def get_proposal_by_id_or_job_number(db: Session, proposal_id: str):
     proposal = db.query(Proposal).filter(Proposal.job_number == proposal_id).first()
     return proposal
 
-@router.get("/proposals/{proposal_id}/questions")
-async def get_proposal_questions(
+# ============================================================================
+# SHARED HANDLER FUNCTION
+# ============================================================================
+async def _get_proposal_questions_handler(
     proposal_id: str,
     request: Request,
-    db: Session = Depends(get_db),
+    db: Session,
     status: Optional[str] = None
 ):
-    """Get all questions for a proposal"""
+    """Shared handler for getting proposal questions"""
     user = getattr(request.state, 'user', None)
     
     try:
@@ -101,14 +103,40 @@ async def get_proposal_questions(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to fetch questions: {str(e)}")
 
-@router.post("/proposals/{proposal_id}/questions")
-async def create_question(
+# ============================================================================
+# GET QUESTIONS ROUTES (WITH AND WITHOUT TRAILING SLASH)
+# ============================================================================
+
+@router.get("/proposals/{proposal_id}/questions")
+async def get_proposal_questions(
+    proposal_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    status: Optional[str] = None
+):
+    """Get all questions for a proposal (without trailing slash)"""
+    return await _get_proposal_questions_handler(proposal_id, request, db, status)
+
+@router.get("/proposals/{proposal_id}/questions/")
+async def get_proposal_questions_trailing_slash(
+    proposal_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    status: Optional[str] = None
+):
+    """Get all questions for a proposal (with trailing slash)"""
+    return await _get_proposal_questions_handler(proposal_id, request, db, status)
+
+# ============================================================================
+# SHARED HANDLER FOR CREATING QUESTIONS
+# ============================================================================
+async def _create_question_handler(
     proposal_id: str,
     question_data: CreateQuestionRequest,
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session
 ):
-    """Create a new equipment question"""
+    """Shared handler for creating questions"""
     user = getattr(request.state, 'user', None)
     
     try:
@@ -168,6 +196,34 @@ async def create_question(
         traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create question: {str(e)}")
+
+# ============================================================================
+# CREATE QUESTION ROUTES (WITH AND WITHOUT TRAILING SLASH)
+# ============================================================================
+
+@router.post("/proposals/{proposal_id}/questions")
+async def create_question(
+    proposal_id: str,
+    question_data: CreateQuestionRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Create a new equipment question (without trailing slash)"""
+    return await _create_question_handler(proposal_id, question_data, request, db)
+
+@router.post("/proposals/{proposal_id}/questions/")
+async def create_question_trailing_slash(
+    proposal_id: str,
+    question_data: CreateQuestionRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Create a new equipment question (with trailing slash)"""
+    return await _create_question_handler(proposal_id, question_data, request, db)
+
+# ============================================================================
+# ANSWER QUESTION ROUTE
+# ============================================================================
 
 @router.post("/questions/{question_id}/answer")
 async def answer_question(
