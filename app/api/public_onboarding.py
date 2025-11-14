@@ -159,30 +159,12 @@ async def onboard_client(
     api_key: str = Depends(verify_api_key)
 ):
     """
-    🌍 PUBLIC ENDPOINT: Onboard a new client with proposal and temp access
+    🌍 PUBLIC ENDPOINT: Onboard a new client with complete proposal and temp access
 
     Authentication: Requires X-API-Key header
 
-    Flow:
-    1. Validate API key
-    2. Create new proposal
-    3. Generate JWT token for temp access
-    4. Return proposal details and access link
-
-    Example:
-    ```bash
-    curl -X POST https://api.example.com/api/v1/public/onboard-client \
-      -H "X-API-Key: your-api-key" \
-      -H "Content-Type: application/json" \
-      -d '{
-        "client_name": "John Doe",
-        "client_email": "john@example.com",
-        "client_company": "Acme Corp",
-        "venue_name": "Convention Center",
-        "event_location": "New York, NY",
-        "start_date": "2025-06-15"
-      }'
-    ```
+    Creates a full proposal with sections, line items, labor, timeline, and generates
+    a temporary JWT access link for the client to view the proposal.
     """
 
     logger.info(f"🆕 Onboarding new client: {request.client_name} ({request.client_email})")
@@ -210,7 +192,6 @@ async def onboard_client(
             try:
                 start_date = datetime.fromisoformat(request.start_date.replace('Z', '+00:00')).date()
             except:
-                # Try simple date format
                 try:
                     start_date = datetime.strptime(request.start_date, '%Y-%m-%d').date()
                 except:
@@ -239,7 +220,6 @@ async def onboard_client(
         # Calculate product pricing from sections/items
         for section in (request.sections or []):
             for item in section.items:
-                item_subtotal = (item.unit_price * item.quantity) + item.discount
                 product_subtotal += (item.unit_price * item.quantity)
                 product_discount += item.discount
 
@@ -437,7 +417,7 @@ async def onboard_client(
 
         logger.info(f"✅ Completed proposal creation with all sections, items, labor, and timeline")
 
-        # 4. Generate JWT token for temp access
+        # 9. Generate JWT token for temp access
         token, expires_at = create_temp_access_token(
             recipient_email=request.client_email,
             proposal_id=str(new_proposal.id),
@@ -445,13 +425,13 @@ async def onboard_client(
             duration_hours=request.access_duration_hours
         )
 
-        # 5. Build access URL
+        # 10. Build access URL
         frontend_url = settings.FRONTEND_BASE_URL
         temp_access_url = f"{frontend_url}/proposal?token={token}"
 
         logger.info(f"🔐 Generated temp access link (expires: {expires_at.isoformat()})")
 
-        # 9. Return response
+        # 11. Return response
         return OnboardClientResponse(
             success=True,
             message=f"Client {request.client_name} onboarded successfully with complete proposal",

@@ -40,8 +40,8 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     # Public API Key for client onboarding
-    PUBLIC_API_KEY: str = "pinnacle-api-key-change-in-production"
-    
+    PUBLIC_API_KEY: str = "1N20PR8Patev2YBQnwsYLUyNwjlKTw2m3Hw814fr24c"
+
     @property
     def allowed_origins_list(self) -> List[str]:
         """Parse comma-separated origins into list"""
