@@ -14,6 +14,7 @@ from app.auth.sso_middleware import ApprovedUserMiddleware
 # API routers
 from app.api import proposals, questions, users, admin, admin_read
 from app.api import secure_access  # ✅ NEW: JWT temporary access module
+from app.api import public_onboarding  # ✅ NEW: Public client onboarding API
 
 from app.core.logging import setup_logging
 from app.database import init_database
@@ -118,7 +119,11 @@ app.add_middleware(
         "/api/v1/proposal/access",          # Client validates JWT token
         "/api/v1/admin/send-proposal",      # Admin generates JWT link
         "/api/v1/proposal/token-info",      # Optional: Debug token info
-        "api/v1/proposal/"
+        "api/v1/proposal/",
+
+        # ✅ Public Onboarding API (API KEY AUTHENTICATION)
+        "/api/v1/public/onboard-client",    # Public client onboarding
+        "/api/v1/public/health"             # Public health check
     ]
 )
 
@@ -163,9 +168,16 @@ app.include_router(
 
 # ✅ NEW: JWT-based temporary access (stateless, no sessions)
 app.include_router(
-    secure_access.router, 
-    prefix="/api/v1", 
+    secure_access.router,
+    prefix="/api/v1",
     tags=["secure-access"]
+)
+
+# ✅ NEW: Public client onboarding API (API key authentication)
+app.include_router(
+    public_onboarding.router,
+    prefix="/api/v1",
+    tags=["public-onboarding"]
 )
 
 logger.info("✅ All API routers registered")
@@ -193,6 +205,7 @@ async def health_check():
             "proposal_management": True,       # ✅ Full CRUD operations
             "qa_system": True,                 # ✅ Client questions
             "email_notifications": True,       # ✅ Gmail SMTP
+            "public_onboarding_api": True,     # ✅ API key-based client onboarding
         },
         "endpoints": {
             "docs": "/docs" if settings.DEBUG else None,

@@ -35,9 +35,12 @@ class Settings(BaseSettings):
     
     # Rate Limiting
     RATE_LIMIT_ENABLED: bool = True
-    
+
     # Logging
     LOG_LEVEL: str = "INFO"
+
+    # Public API Key for client onboarding
+    PUBLIC_API_KEY: str = "pinnacle-api-key-change-in-production"
     
     @property
     def allowed_origins_list(self) -> List[str]:
