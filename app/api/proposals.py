@@ -14,11 +14,32 @@ from app.models.proposals import (
     ProposalQuestion
 )
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+from datetime import datetime, date
+import uuid
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Request Models
+class CreateProposalRequest(BaseModel):
+    job_number: str
+    client_name: str
+    client_email: str
+    client_company: Optional[str] = None
+    client_contact: Optional[str] = None
+    client_phone: Optional[str] = None
+    venue_name: Optional[str] = None
+    event_location: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    prepared_by: Optional[str] = None
+    salesperson: Optional[str] = None
+    salesperson_email: Optional[str] = None
+    status: str = "draft"
+    version: str = "1.0"
 
 @router.get("/proposals")
 async def get_proposals(
@@ -59,6 +80,8 @@ async def get_proposals(
                     "event_location": proposal.event_location,
                     "start_date": proposal.start_date.isoformat() if proposal.start_date else None,
                     "end_date": proposal.end_date.isoformat() if proposal.end_date else None,
+                    "product_subtotal": float(proposal.product_subtotal) if proposal.product_subtotal else 0,
+                    "labor_total": float(proposal.labor_total) if proposal.labor_total else 0,
                     "total_cost": float(proposal.total_cost) if proposal.total_cost else 0,
                     "status": proposal.status,
                     "prepared_by": proposal.prepared_by,
@@ -76,6 +99,94 @@ async def get_proposals(
     except Exception as e:
         logger.error(f"Error fetching proposals: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch proposals: {str(e)}")
+
+@router.post("/proposals")
+async def create_proposal(
+    proposal_data: CreateProposalRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Create a new proposal"""
+    user = getattr(request.state, 'user', None)
+
+    try:
+        # Check if job_number already exists
+        existing = db.query(Proposal).filter(
+            Proposal.job_number == proposal_data.job_number
+        ).first()
+
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Proposal with job number {proposal_data.job_number} already exists"
+            )
+
+        # Parse dates if provided
+        start_date = None
+        end_date = None
+        if proposal_data.start_date:
+            try:
+                start_date = datetime.fromisoformat(proposal_data.start_date.replace('Z', '+00:00')).date()
+            except:
+                start_date = None
+
+        if proposal_data.end_date:
+            try:
+                end_date = datetime.fromisoformat(proposal_data.end_date.replace('Z', '+00:00')).date()
+            except:
+                end_date = None
+
+        # Create new proposal
+        new_proposal = Proposal(
+            id=uuid.uuid4(),
+            job_number=proposal_data.job_number,
+            client_name=proposal_data.client_name,
+            client_email=proposal_data.client_email,
+            client_company=proposal_data.client_company,
+            client_contact=proposal_data.client_contact,
+            client_phone=proposal_data.client_phone,
+            venue_name=proposal_data.venue_name,
+            event_location=proposal_data.event_location,
+            start_date=start_date,
+            end_date=end_date,
+            prepared_by=proposal_data.prepared_by or (user.get('full_name') if user else 'Admin'),
+            salesperson=proposal_data.salesperson,
+            salesperson_email=proposal_data.salesperson_email,
+            status=proposal_data.status,
+            version=proposal_data.version,
+            product_subtotal=0,
+            product_discount=0,
+            product_total=0,
+            labor_total=0,
+            service_charge=0,
+            tax_amount=0,
+            total_cost=0,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+
+        db.add(new_proposal)
+        db.commit()
+        db.refresh(new_proposal)
+
+        logger.info(f"Created proposal {new_proposal.job_number} (ID: {new_proposal.id})")
+
+        return {
+            "id": str(new_proposal.id),
+            "job_number": new_proposal.job_number,
+            "client_name": new_proposal.client_name,
+            "client_email": new_proposal.client_email,
+            "status": new_proposal.status,
+            "created_at": new_proposal.created_at.isoformat(),
+            "message": "Proposal created successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating proposal: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create proposal: {str(e)}")
 
 @router.get("/proposals/{proposal_id}")
 async def get_proposal(
@@ -278,6 +389,8 @@ async def search_proposals_by_client(
                     "job_number": p.job_number,
                     "client_name": p.client_name,
                     "venue": p.venue_name,
+                    "product_subtotal": float(p.product_subtotal) if p.product_subtotal else 0,
+                    "labor_total": float(p.labor_total) if p.labor_total else 0,
                     "total_cost": float(p.total_cost) if p.total_cost else 0,
                     "status": p.status,
                     "start_date": p.start_date.isoformat() if p.start_date else None,
@@ -314,6 +427,8 @@ async def search_by_job_number(
             "job_number": proposal.job_number,
             "client_name": proposal.client_name,
             "client_email": proposal.client_email,
+            "product_subtotal": float(proposal.product_subtotal) if proposal.product_subtotal else 0,
+            "labor_total": float(proposal.labor_total) if proposal.labor_total else 0,
             "total_cost": float(proposal.total_cost) if proposal.total_cost else 0,
             "status": proposal.status,
             "user": user
