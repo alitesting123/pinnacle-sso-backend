@@ -141,41 +141,86 @@ async def _create_question_handler(
     request: Request,
     db: Session
 ):
-    """Shared handler for creating questions"""
+    """Shared handler for creating questions with intelligent classification"""
     user = getattr(request.state, 'user', None)
-    
+
     try:
         logger.info(f"Creating question for proposal: {proposal_id}")
         logger.info(f"Question data: {question_data.dict()}")
-        
+
         # Get proposal by UUID or job_number
         proposal = get_proposal_by_id_or_job_number(db, proposal_id)
-        
+
         if not proposal:
             logger.error(f"Proposal not found: {proposal_id}")
             raise HTTPException(status_code=404, detail=f"Proposal {proposal_id} not found")
-        
+
         logger.info(f"Found proposal: {proposal.id} (job_number: {proposal.job_number})")
-        
+
+        # Classify the question using RAG service
+        rag_service = get_rag_service()
+        classification = await rag_service.classify_question(question_data.question)
+
+        logger.info(f"Question classified as: {classification['category']} - {classification['reasoning']}")
+
         # Create new question
         new_question = ProposalQuestion(
             id=uuid.uuid4(),
-            proposal_id=proposal.id,  # Use the UUID from the found proposal
+            proposal_id=proposal.id,
             line_item_id=None,
             question_text=question_data.question,
-            status='pending',
+            status='pending',  # Will be updated to 'answered' if auto-answered
             priority='normal',
             asked_by_name=user.get('full_name') if user else 'Anonymous',
             asked_by_email=user.get('email') if user else None,
-            asked_at=datetime.utcnow()
+            asked_at=datetime.utcnow(),
+            ai_generated=False  # Question itself is not AI-generated
         )
-        
+
         db.add(new_question)
         db.commit()
         db.refresh(new_question)
-        
+
         logger.info(f"Created question {new_question.id} for proposal {proposal_id}")
-        
+
+        # Auto-answer if appropriate (simple or T&C questions)
+        ai_answer_data = None
+        if classification['should_auto_answer'] and classification['use_ai']:
+            try:
+                logger.info(f"Auto-answering {classification['category']} question")
+
+                # Generate AI answer
+                answer_result = await rag_service.answer_question(
+                    question=question_data.question,
+                    proposal=proposal,
+                    db=db,
+                    use_rag=True
+                )
+
+                if answer_result.get('answer'):
+                    # Update question with AI answer
+                    new_question.answer_text = answer_result['answer']
+                    new_question.status = 'answered'
+                    new_question.answered_by = 'AI Assistant'
+                    new_question.answered_at = datetime.utcnow()
+                    new_question.ai_generated = True  # Mark answer as AI-generated
+
+                    db.commit()
+                    db.refresh(new_question)
+
+                    logger.info(f"Question {new_question.id} auto-answered by AI")
+
+                    ai_answer_data = {
+                        'ai_answer': answer_result['answer'],
+                        'confidence': answer_result.get('confidence'),
+                        'method': answer_result.get('method'),
+                        'sources': answer_result.get('sources', [])
+                    }
+
+            except Exception as e:
+                logger.error(f"Failed to auto-answer question: {e}")
+                # Continue without auto-answer - question remains pending
+
         # Return in frontend format
         response_data = {
             "id": str(new_question.id),
@@ -183,16 +228,26 @@ async def _create_question_handler(
             "itemName": question_data.item_name,
             "sectionName": question_data.section_name,
             "question": new_question.question_text,
-            "answer": None,
+            "answer": new_question.answer_text,
             "status": new_question.status,
             "askedBy": new_question.asked_by_name or new_question.asked_by_email or "Unknown",
             "askedAt": new_question.asked_at.isoformat(),
-            "answeredBy": None,
-            "answeredAt": None
+            "answeredBy": new_question.answered_by,
+            "answeredAt": new_question.answered_at.isoformat() if new_question.answered_at else None,
+            "ai_generated": new_question.ai_generated,
+            "classification": {
+                "category": classification['category'],
+                "reasoning": classification['reasoning'],
+                "auto_answered": classification['should_auto_answer']
+            }
         }
-        
+
+        # Include AI answer details if available
+        if ai_answer_data:
+            response_data['ai_details'] = ai_answer_data
+
         return response_data
-        
+
     except HTTPException:
         raise
     except Exception as e:

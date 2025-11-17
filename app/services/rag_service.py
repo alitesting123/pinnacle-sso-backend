@@ -62,47 +62,121 @@ class RAGService:
         self.vector_stores: Dict[str, Any] = {}
         self.document_chunks: Dict[str, List[Dict]] = {}
 
-    async def is_simple_question(self, question: str) -> Tuple[bool, str]:
+    def is_terms_and_conditions_question(self, question: str) -> bool:
         """
-        Determine if a question is simple enough to answer directly
-        Returns: (is_simple, reason)
+        Detect if a question is about terms and conditions
         """
-        # Simple heuristic checks
         question_lower = question.lower().strip()
 
+        terms_keywords = [
+            'terms', 'conditions', 'terms and conditions', 'terms & conditions',
+            'contract', 'agreement', 'policy', 'policies',
+            'cancellation', 'refund', 'payment terms',
+            'liability', 'insurance', 'warranty', 'warranties',
+            'deposit', 'payment schedule', 'late fee',
+            'damage', 'responsibility', 'obligations'
+        ]
+
+        return any(keyword in question_lower for keyword in terms_keywords)
+
+    async def classify_question(self, question: str) -> Dict[str, Any]:
+        """
+        Classify question into categories and determine handling strategy
+
+        Returns:
+        {
+            'category': 'simple' | 'complex' | 'terms_and_conditions',
+            'should_auto_answer': bool,
+            'use_ai': bool,
+            'reasoning': str
+        }
+        """
+        question_lower = question.lower().strip()
+
+        # Check if it's about terms and conditions first
+        if self.is_terms_and_conditions_question(question):
+            return {
+                'category': 'terms_and_conditions',
+                'should_auto_answer': True,  # Auto-answer with AI flag
+                'use_ai': True,
+                'ai_flag': True,  # Mark as AI-generated
+                'reasoning': 'Terms and conditions question - AI can provide standard answer'
+            }
+
+        # Check if it's a simple factual question
         # Very short questions are often simple
         if len(question.split()) <= 5:
-            simple_indicators = ['what', 'when', 'where', 'who', 'how much', 'cost']
+            simple_indicators = ['what', 'when', 'where', 'who', 'how much', 'cost', 'price']
             if any(indicator in question_lower for indicator in simple_indicators):
-                return True, "Short factual question"
+                return {
+                    'category': 'simple',
+                    'should_auto_answer': True,
+                    'use_ai': True,
+                    'ai_flag': True,
+                    'reasoning': 'Short factual question - can be answered directly'
+                }
 
         # Questions asking for specific facts
         factual_keywords = [
             'what is', 'when is', 'where is', 'who is',
             'what time', 'how much does', 'what does',
-            'is there', 'do you have', 'can you'
+            'is there', 'do you have', 'can you provide',
+            'what are', 'how many'
         ]
         if any(keyword in question_lower for keyword in factual_keywords):
-            return True, "Factual question"
+            return {
+                'category': 'simple',
+                'should_auto_answer': True,
+                'use_ai': True,
+                'ai_flag': True,
+                'reasoning': 'Factual question - can be answered with AI'
+            }
 
-        # Complex question indicators
+        # Complex question indicators - these need human review
         complex_indicators = [
-            'explain', 'describe', 'compare', 'analyze',
-            'why', 'how does', 'what if', 'recommend',
-            'suggest', 'optimize', 'improve'
+            'explain', 'describe in detail', 'compare', 'analyze',
+            'why did', 'how does', 'what if', 'recommend',
+            'suggest', 'optimize', 'improve', 'customize',
+            'can you change', 'can we modify'
         ]
         if any(indicator in question_lower for indicator in complex_indicators):
-            return False, "Complex analytical question"
+            return {
+                'category': 'complex',
+                'should_auto_answer': False,  # Save for human review
+                'use_ai': False,
+                'ai_flag': False,
+                'reasoning': 'Complex analytical question requiring human expertise'
+            }
 
         # Questions with multiple parts
-        if '?' in question[:-1]:  # Multiple question marks
-            return False, "Multi-part question"
+        if '?' in question[:-1] or (' and ' in question_lower and '?' in question):
+            return {
+                'category': 'complex',
+                'should_auto_answer': False,
+                'use_ai': False,
+                'ai_flag': False,
+                'reasoning': 'Multi-part question requiring comprehensive human answer'
+            }
 
-        if ' and ' in question_lower or ' or ' in question_lower:
-            return False, "Compound question"
+        # Default to complex for safety (human review)
+        return {
+            'category': 'complex',
+            'should_auto_answer': False,
+            'use_ai': False,
+            'ai_flag': False,
+            'reasoning': 'Default to human review for quality assurance'
+        }
 
-        # Default to complex for safety (use RAG)
-        return False, "Default to RAG for comprehensive answer"
+    async def is_simple_question(self, question: str) -> Tuple[bool, str]:
+        """
+        Determine if a question is simple enough to answer directly
+        Returns: (is_simple, reason)
+
+        DEPRECATED: Use classify_question() instead for more detailed classification
+        """
+        classification = await self.classify_question(question)
+        is_simple = classification['category'] in ['simple', 'terms_and_conditions']
+        return is_simple, classification['reasoning']
 
     def extract_proposal_content(self, proposal: Proposal, db: Session) -> List[Dict[str, Any]]:
         """

@@ -179,26 +179,27 @@ class ProposalLabor(Base):
 class ProposalQuestion(Base):
     """Client questions about proposal items"""
     __tablename__ = "proposal_questions"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     proposal_id = Column(UUID(as_uuid=True), ForeignKey('proposals.id'), nullable=False, index=True)
     line_item_id = Column(UUID(as_uuid=True), ForeignKey('proposal_line_items.id'))
-    
+
     question_text = Column(Text, nullable=False)
     status = Column(String(50), default='pending')
     priority = Column(String(20), default='normal')
-    
+
     asked_by_name = Column(String(255))
     asked_by_email = Column(String(255))
     asked_at = Column(DateTime, default=datetime.utcnow)
-    
+
     answer_text = Column(Text)
     answered_by = Column(String(255))
     answered_at = Column(DateTime)
-    
+    ai_generated = Column(Boolean, default=False)  # Flag for AI-generated answers
+
     internal_notes = Column(Text)
     requires_follow_up = Column(Boolean, default=False)
-    
+
     # Relationships
     proposal = relationship("Proposal", back_populates="questions")
     line_item = relationship("ProposalLineItem", back_populates="questions")

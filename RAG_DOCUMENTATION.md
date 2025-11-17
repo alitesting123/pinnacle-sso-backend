@@ -2,24 +2,73 @@
 
 ## Overview
 
-The Pinnacle SSO Backend now includes an intelligent question answering system powered by Claude AI and Retrieval-Augmented Generation (RAG). This system can automatically answer questions about proposals by analyzing proposal content and generating contextually relevant responses.
+The Pinnacle SSO Backend includes an intelligent question answering system powered by Claude AI and Retrieval-Augmented Generation (RAG). This system automatically classifies and handles questions about proposals, providing instant AI-generated answers for simple questions while routing complex questions to human experts.
+
+## 🎯 Automatic Question Handling Workflow
+
+When a customer submits a question, the system automatically:
+
+1. **Classifies the question** into one of three categories:
+   - **Simple** - Factual questions (e.g., "What is the total cost?")
+   - **Terms & Conditions** - Policy questions (e.g., "What is your cancellation policy?")
+   - **Complex** - Questions requiring expert judgment (e.g., "Why did you choose this equipment?")
+
+2. **Handles each type appropriately**:
+   - ✅ **Simple & T&C questions** → Auto-answered immediately by AI with `ai_generated: true` flag
+   - 📝 **Complex questions** → Saved as `pending` for human review (NOT auto-answered)
+
+3. **Marks AI responses** with the `ai_generated` flag so you can identify them
+
+### Question Categories Explained
+
+#### ✅ Auto-Answered (Simple Questions)
+- "What is the total cost?"
+- "When is the event?"
+- "Where is the venue?"
+- "Who is the salesperson?"
+- "How many microphones are included?"
+- "What time does setup start?"
+
+#### ✅ Auto-Answered (Terms & Conditions)
+- "What is your cancellation policy?"
+- "What are the payment terms?"
+- "What if equipment gets damaged?"
+- "Do you require a deposit?"
+- "What about insurance and liability?"
+- "What are your refund terms?"
+
+#### 📝 Saved for Human Review (Complex Questions)
+- "Why did you choose this specific audio setup?"
+- "Can you explain how the lighting will work?"
+- "Can we customize this package?"
+- "What if we need to make changes?"
+- "How does this compare to other options?"
+- "Can you recommend a better solution?"
 
 ## Features
 
 ### 1. **Intelligent Question Classification**
-- Automatically determines if a question is simple or complex
-- Simple questions get direct AI answers
-- Complex questions use RAG to retrieve relevant context first
+- Automatically determines question complexity
+- Detects terms & conditions questions
+- Routes simple/T&C to AI, complex to humans
+- All classification decisions logged for review
 
-### 2. **Semantic Search**
+### 2. **Semantic Search (RAG)**
 - Proposal content is automatically indexed using vector embeddings
 - Questions are matched against proposal content using semantic similarity
 - Retrieves the most relevant context for answering
+- Uses FAISS for fast vector search
 
-### 3. **Multiple Answer Modes**
-- **Simple Mode**: Direct AI answering without retrieval
-- **RAG Mode**: Retrieves relevant context before answering (default)
-- **Auto-save**: Option to automatically save AI-generated answers
+### 3. **AI Answer Flagging**
+- All AI-generated answers marked with `ai_generated: true`
+- Easy to identify which answers came from AI vs. humans
+- Transparency for customers and internal teams
+- Can filter/report on AI vs. human answers
+
+### 4. **Multiple Answer Modes**
+- **Automatic Classification** (default) - System decides based on question type
+- **Manual AI Answer** - Generate AI suggestions for any question
+- **Interactive Ask** - Get instant answers without saving
 
 ## Setup
 
