@@ -40,7 +40,7 @@ echo "-------------------------------"
 echo "Question: 'What is the total cost?'"
 echo ""
 
-response=$(curl -s -X POST "$API_URL/api/v1/proposals/JOB-2024-001/questions" \
+response=$(curl -s -X POST "$API_URL/api/v1/proposals/GT2025-001/questions" \
   -H "Content-Type: application/json" \
   -d '{
     "item_id": "",
@@ -92,7 +92,7 @@ echo "--------------------------------"
 echo "Question: 'Why did you choose this specific audio equipment?'"
 echo ""
 
-response=$(curl -s -X POST "$API_URL/api/v1/proposals/JOB-2024-001/questions" \
+response=$(curl -s -X POST "$API_URL/api/v1/proposals/GT2025-001/questions" \
   -H "Content-Type: application/json" \
   -d '{
     "item_id": "audio-001",
@@ -125,7 +125,7 @@ echo "-------------------------------------------"
 echo "Question: 'What is your cancellation policy?'"
 echo ""
 
-response=$(curl -s -X POST "$API_URL/api/v1/proposals/JOB-2024-001/questions" \
+response=$(curl -s -X POST "$API_URL/api/v1/proposals/GT2025-001/questions" \
   -H "Content-Type: application/json" \
   -d '{
     "item_id": "",
@@ -166,7 +166,7 @@ echo "------------------------------------"
 echo "Question: 'When is the event?'"
 echo ""
 
-response=$(curl -s -X POST "$API_URL/api/v1/proposals/JOB-2024-001/questions/ask-ai" \
+response=$(curl -s -X POST "$API_URL/api/v1/proposals/GT2025-001/questions/ask-ai" \
   -H "Content-Type: application/json" \
   -d '{
     "question": "When is the event?",
@@ -207,5 +207,5 @@ echo "  2. Visit http://localhost:8000/docs for API documentation"
 echo "  3. Test with your frontend application"
 echo ""
 echo "To view created questions:"
-echo "  curl http://localhost:8000/api/v1/proposals/JOB-2024-001/questions"
+echo "  curl http://localhost:8000/api/v1/proposals/GT2025-001/questions"
 echo ""
