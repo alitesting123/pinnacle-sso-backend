@@ -7,12 +7,12 @@ from sqlalchemy import desc
 from app.database import get_db
 from app.models.proposals import ProposalQuestion, Proposal
 from app.services.rag_service import get_rag_service
+from app.config import settings
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
 import uuid
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ router = APIRouter()
 # Configuration: Enable/Disable RAG Auto-Answering
 # Set ENABLE_RAG_AUTO_ANSWER=false in environment to disable auto-answering
 # When disabled, all questions are saved as 'pending' (old behavior)
-ENABLE_RAG_AUTO_ANSWER = os.getenv("ENABLE_RAG_AUTO_ANSWER", "true").lower() in ["true", "1", "yes"]
+ENABLE_RAG_AUTO_ANSWER = settings.ENABLE_RAG_AUTO_ANSWER
 
 logger.info(f"RAG Auto-Answering: {'ENABLED' if ENABLE_RAG_AUTO_ANSWER else 'DISABLED'}")
 

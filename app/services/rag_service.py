@@ -26,6 +26,7 @@ except ImportError as e:
 
 from sqlalchemy.orm import Session
 from app.models.proposals import Proposal, ProposalSection, ProposalLineItem, ProposalTimeline, ProposalLabor
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +36,10 @@ class RAGService:
 
     def __init__(self, api_key: Optional[str] = None):
         """Initialize RAG service with Claude API and embedding model"""
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        self.api_key = api_key or settings.ANTHROPIC_API_KEY
 
         if not self.api_key:
-            logger.warning("ANTHROPIC_API_KEY not found in environment")
+            logger.warning("ANTHROPIC_API_KEY not configured in settings")
 
         # Initialize Claude client
         if anthropic and self.api_key:
