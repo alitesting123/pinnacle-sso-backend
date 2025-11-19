@@ -487,8 +487,9 @@ Question: {question}
 Please provide a brief, helpful answer. If you need more specific information from the proposal to answer accurately, mention what details would be helpful."""
 
             # Call Claude
+            # Using Haiku model for better availability and lower cost
             message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-3-haiku-20240307",
                 max_tokens=1024,
                 messages=[{
                     "role": "user",
