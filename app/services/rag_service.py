@@ -486,6 +486,16 @@ Question: {question}
 
 Please provide a brief, helpful answer. If you need more specific information from the proposal to answer accurately, mention what details would be helpful."""
 
+            # Log the prompt being sent to AI
+            logger.info("=" * 80)
+            logger.info("📝 SENDING PROMPT TO AI")
+            logger.info("=" * 80)
+            logger.info(f"Question: {question}")
+            logger.info(f"Method: {'RAG' if context_chunks else 'Simple'}")
+            logger.info(f"Context chunks: {len(context_chunks) if context_chunks else 0}")
+            logger.debug(f"Full prompt:\n{prompt}")
+            logger.info("=" * 80)
+
             # Call Claude
             # Using Haiku model for better availability and lower cost
             message = self.client.messages.create(
@@ -498,6 +508,16 @@ Please provide a brief, helpful answer. If you need more specific information fr
             )
 
             answer = message.content[0].text
+
+            # Log the AI response
+            logger.info("=" * 80)
+            logger.info("🤖 AI GENERATED ANSWER")
+            logger.info("=" * 80)
+            logger.info(f"Question: {question}")
+            logger.info(f"Answer: {answer}")
+            logger.info(f"Model: claude-3-haiku-20240307")
+            logger.info(f"Tokens used: {message.usage.input_tokens} input, {message.usage.output_tokens} output")
+            logger.info("=" * 80)
 
             # Determine method and confidence
             method = 'rag' if context_chunks else 'simple'
