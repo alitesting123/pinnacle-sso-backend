@@ -12,10 +12,18 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 import uuid
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Configuration: Enable/Disable RAG Auto-Answering
+# Set ENABLE_RAG_AUTO_ANSWER=false in environment to disable auto-answering
+# When disabled, all questions are saved as 'pending' (old behavior)
+ENABLE_RAG_AUTO_ANSWER = os.getenv("ENABLE_RAG_AUTO_ANSWER", "true").lower() in ["true", "1", "yes"]
+
+logger.info(f"RAG Auto-Answering: {'ENABLED' if ENABLE_RAG_AUTO_ANSWER else 'DISABLED'}")
 
 # Request/Response Models
 class CreateQuestionRequest(BaseModel):
@@ -184,8 +192,9 @@ async def _create_question_handler(
         logger.info(f"Created question {new_question.id} for proposal {proposal_id}")
 
         # Auto-answer if appropriate (simple or T&C questions)
+        # Only if RAG auto-answering is enabled via ENABLE_RAG_AUTO_ANSWER flag
         ai_answer_data = None
-        if classification['should_auto_answer'] and classification['use_ai']:
+        if ENABLE_RAG_AUTO_ANSWER and classification['should_auto_answer'] and classification['use_ai']:
             try:
                 logger.info(f"Auto-answering {classification['category']} question")
 
@@ -238,7 +247,8 @@ async def _create_question_handler(
             "classification": {
                 "category": classification['category'],
                 "reasoning": classification['reasoning'],
-                "auto_answered": classification['should_auto_answer']
+                "auto_answered": classification['should_auto_answer'] and ENABLE_RAG_AUTO_ANSWER,
+                "rag_enabled": ENABLE_RAG_AUTO_ANSWER
             }
         }
 
