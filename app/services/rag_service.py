@@ -107,7 +107,7 @@ class RAGService:
         # Check if it's a simple factual question
         # Very short questions are often simple
         if len(question.split()) <= 5:
-            simple_indicators = ['what', 'when', 'where', 'who', 'how much', 'cost', 'price']
+            simple_indicators = ['what', 'when', 'where', 'who', 'how much', 'how long', 'how many', 'cost', 'price', 'time', 'date']
             if any(indicator in question_lower for indicator in simple_indicators):
                 return {
                     'category': 'simple',
@@ -120,9 +120,9 @@ class RAGService:
         # Questions asking for specific facts
         factual_keywords = [
             'what is', 'when is', 'where is', 'who is',
-            'what time', 'how much does', 'what does',
-            'is there', 'do you have', 'can you provide',
-            'what are', 'how many'
+            'what time', 'how much', 'how long', 'how many',
+            'what does', 'is there', 'do you have', 'can you provide',
+            'what are', 'when does', 'where does'
         ]
         if any(keyword in question_lower for keyword in factual_keywords):
             return {
