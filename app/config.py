@@ -38,7 +38,11 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"
-    
+
+    # AI/RAG Configuration
+    ANTHROPIC_API_KEY: str = ""
+    ENABLE_RAG_AUTO_ANSWER: bool = True
+
     @property
     def allowed_origins_list(self) -> List[str]:
         """Parse comma-separated origins into list"""
@@ -64,3 +68,8 @@ if settings.DEBUG:
     print(f"[Config] Using database: {'PostgreSQL' if 'postgresql' in settings.DATABASE_URL else 'SQLite'}")
     print(f"[Config] FRONTEND_BASE_URL: {settings.FRONTEND_BASE_URL}")
     print(f"[Config] ALLOWED_ORIGINS: {len(settings.allowed_origins_list)} origins configured")
+
+    # RAG Configuration
+    api_key_masked = settings.ANTHROPIC_API_KEY[:20] + "..." if settings.ANTHROPIC_API_KEY else "NOT SET"
+    print(f"[Config] ANTHROPIC_API_KEY: {api_key_masked}")
+    print(f"[Config] ENABLE_RAG_AUTO_ANSWER: {settings.ENABLE_RAG_AUTO_ANSWER}")
