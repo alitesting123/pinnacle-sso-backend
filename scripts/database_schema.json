@@ -1,0 +1,1392 @@
+{
+  "database_info": {
+    "type": "PostgreSQL",
+    "version": "PostgreSQL 17.6 on aarch64-unknown-linux-gnu, compiled by gcc (GCC) 13.2.0, 64-bit",
+    "database": "postgres",
+    "size": "11 MB"
+  },
+  "tables": {
+    "pre_approved_users": {
+      "row_count": 2,
+      "comment": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "email",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "full_name",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "company",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "department",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "roles",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cognito_user_id",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_login",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "ix_pre_approved_users_email",
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        },
+        {
+          "name": "pre_approved_users_cognito_user_id_key",
+          "columns": [
+            "cognito_user_id"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    "active_users": {
+      "row_count": 0,
+      "comment": null,
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "email",
+          "type": "VARCHAR",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "full_name",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "company",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "department",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "roles",
+          "type": "JSON",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_login",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "pre_approved_id",
+          "type": "VARCHAR",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "user_id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "ix_active_users_email",
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    "proposals": {
+      "row_count": 4,
+      "comment": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true
+        },
+        {
+          "name": "job_number",
+          "type": "VARCHAR(50)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_name",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_email",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_company",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_contact",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "client_phone",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "event_location",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "venue_name",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "start_date",
+          "type": "DATE",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "end_date",
+          "type": "DATE",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "prepared_by",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "salesperson",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "salesperson_email",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": "'tentative'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "version",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'1.0'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "product_subtotal",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "product_discount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "product_total",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "labor_total",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "service_charge",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "tax_amount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "total_cost",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "last_modified_by",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "internal_notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "terms_accepted",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "terms_accepted_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "terms_accepted_by",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "name": "idx_proposals_client_email",
+          "columns": [
+            "client_email"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_proposals_dates",
+          "columns": [
+            "start_date",
+            "end_date"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_proposals_job_number",
+          "columns": [
+            "job_number"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_proposals_status",
+          "columns": [
+            "status"
+          ],
+          "unique": false
+        },
+        {
+          "name": "proposals_job_number_key",
+          "columns": [
+            "job_number"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    "proposal_sections": {
+      "row_count": 15,
+      "comment": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true
+        },
+        {
+          "name": "proposal_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "section_name",
+          "type": "VARCHAR(100)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "section_type",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "display_order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "is_expanded",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "true",
+          "primary_key": false
+        },
+        {
+          "name": "section_total",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "constrained_columns": [
+            "proposal_id"
+          ],
+          "referred_table": "proposals",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_sections_proposal",
+          "columns": [
+            "proposal_id"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    "proposal_line_items": {
+      "row_count": 97,
+      "comment": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true
+        },
+        {
+          "name": "section_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "proposal_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "item_number",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "description",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "1",
+          "primary_key": false
+        },
+        {
+          "name": "duration",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "unit_price",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "discount",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "subtotal",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "category",
+          "type": "VARCHAR(100)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "item_type",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "display_order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "updated_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "constrained_columns": [
+            "proposal_id"
+          ],
+          "referred_table": "proposals",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "constrained_columns": [
+            "section_id"
+          ],
+          "referred_table": "proposal_sections",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_line_items_proposal",
+          "columns": [
+            "proposal_id"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_line_items_section",
+          "columns": [
+            "section_id"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    "proposal_timeline": {
+      "row_count": 17,
+      "comment": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true
+        },
+        {
+          "name": "proposal_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "event_date",
+          "type": "DATE",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "start_time",
+          "type": "TIME",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "end_time",
+          "type": "TIME",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "title",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "location",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "setup_tasks",
+          "type": "ARRAY",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "equipment_needed",
+          "type": "ARRAY",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "cost",
+          "type": "NUMERIC(10, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "display_order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "constrained_columns": [
+            "proposal_id"
+          ],
+          "referred_table": "proposals",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_timeline_proposal",
+          "columns": [
+            "proposal_id"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    "proposal_labor": {
+      "row_count": 49,
+      "comment": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true
+        },
+        {
+          "name": "proposal_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "task_name",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "1",
+          "primary_key": false
+        },
+        {
+          "name": "labor_date",
+          "type": "DATE",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "start_time",
+          "type": "TIME",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "end_time",
+          "type": "TIME",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "regular_hours",
+          "type": "NUMERIC(5, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "overtime_hours",
+          "type": "NUMERIC(5, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "double_time_hours",
+          "type": "NUMERIC(5, 2)",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "hourly_rate",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "subtotal",
+          "type": "NUMERIC(10, 2)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "display_order",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "constrained_columns": [
+            "proposal_id"
+          ],
+          "referred_table": "proposals",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_labor_proposal",
+          "columns": [
+            "proposal_id"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    "proposal_questions": {
+      "row_count": 75,
+      "comment": null,
+      "columns": [
+        {
+          "name": "id",
+          "type": "UUID",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "primary_key": true
+        },
+        {
+          "name": "proposal_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "line_item_id",
+          "type": "UUID",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "question_text",
+          "type": "TEXT",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "status",
+          "type": "VARCHAR(50)",
+          "nullable": true,
+          "default": "'pending'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "priority",
+          "type": "VARCHAR(20)",
+          "nullable": true,
+          "default": "'normal'::character varying",
+          "primary_key": false
+        },
+        {
+          "name": "asked_by_name",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "asked_by_email",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "asked_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "answer_text",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "answered_by",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "answered_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "internal_notes",
+          "type": "TEXT",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "requires_follow_up",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        },
+        {
+          "name": "ai_generated",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "false",
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "constrained_columns": [
+            "line_item_id"
+          ],
+          "referred_table": "proposal_line_items",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "constrained_columns": [
+            "proposal_id"
+          ],
+          "referred_table": "proposals",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_proposal_questions_ai_generated",
+          "columns": [
+            "ai_generated"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_questions_proposal",
+          "columns": [
+            "proposal_id"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    "proposal_temp_links": {
+      "row_count": 0,
+      "comment": null,
+      "columns": [
+        {
+          "name": "token",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "proposal_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_email",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_name",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "company",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "permissions",
+          "type": "JSONB",
+          "nullable": true,
+          "default": "'[\"view\"]'::jsonb",
+          "primary_key": false
+        },
+        {
+          "name": "expires_at",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "session_duration_minutes",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "20",
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "true",
+          "primary_key": false
+        },
+        {
+          "name": "access_count",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        },
+        {
+          "name": "last_accessed",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "created_by",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "revoked_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "revoked_by",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "token"
+      ],
+      "foreign_keys": [
+        {
+          "constrained_columns": [
+            "proposal_id"
+          ],
+          "referred_table": "proposals",
+          "referred_columns": [
+            "id"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_temp_links_active",
+          "columns": [
+            "is_active",
+            "expires_at"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_temp_links_email",
+          "columns": [
+            "user_email"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_temp_links_proposal",
+          "columns": [
+            "proposal_id"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    "proposal_sessions": {
+      "row_count": 0,
+      "comment": null,
+      "columns": [
+        {
+          "name": "session_id",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": true
+        },
+        {
+          "name": "proposal_id",
+          "type": "UUID",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "temp_token",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_email",
+          "type": "VARCHAR(255)",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "user_name",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "company",
+          "type": "VARCHAR(255)",
+          "nullable": true,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "created_at",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "expires_at",
+          "type": "TIMESTAMP",
+          "nullable": false,
+          "default": null,
+          "primary_key": false
+        },
+        {
+          "name": "last_accessed",
+          "type": "TIMESTAMP",
+          "nullable": true,
+          "default": "now()",
+          "primary_key": false
+        },
+        {
+          "name": "is_active",
+          "type": "BOOLEAN",
+          "nullable": true,
+          "default": "true",
+          "primary_key": false
+        },
+        {
+          "name": "extension_count",
+          "type": "INTEGER",
+          "nullable": true,
+          "default": "0",
+          "primary_key": false
+        }
+      ],
+      "primary_keys": [
+        "session_id"
+      ],
+      "foreign_keys": [
+        {
+          "constrained_columns": [
+            "proposal_id"
+          ],
+          "referred_table": "proposals",
+          "referred_columns": [
+            "id"
+          ]
+        },
+        {
+          "constrained_columns": [
+            "temp_token"
+          ],
+          "referred_table": "proposal_temp_links",
+          "referred_columns": [
+            "token"
+          ]
+        }
+      ],
+      "indexes": [
+        {
+          "name": "idx_sessions_active",
+          "columns": [
+            "is_active",
+            "expires_at"
+          ],
+          "unique": false
+        },
+        {
+          "name": "idx_sessions_proposal",
+          "columns": [
+            "proposal_id"
+          ],
+          "unique": false
+        }
+      ]
+    }
+  }
+}

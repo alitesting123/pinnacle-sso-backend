@@ -1,0 +1,26 @@
+[
+  {
+    "id": "554f48e6-3d8c-4dc8-94a6-28cb7c780eb2",
+    "email": "amadison@newdomain.com",
+    "full_name": "Aimee Madison",
+    "company": "I Institute",
+    "department": "Events",
+    "roles": "['client']",
+    "is_active": true,
+    "created_at": "2025-10-02T04:40:48.284925",
+    "cognito_user_id": null,
+    "last_login": null
+  },
+  {
+    "id": "4b2909d1-b3ec-4162-8982-3c2587926631",
+    "email": "shanondoah.nicholson@newdomain.com",
+    "full_name": "Shanandoah Nicholson",
+    "company": "User Conference Client",
+    "department": "Events",
+    "roles": "['client']",
+    "is_active": true,
+    "created_at": "2025-10-02T04:40:48.284945",
+    "cognito_user_id": null,
+    "last_login": null
+  }
+]
