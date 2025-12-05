@@ -330,19 +330,13 @@ def create_new_sections(conn):
     for section in sections_data:
         conn.execute(text("""
             INSERT INTO proposal_sections
-            (id, proposal_id, section_name, section_type, section_date, start_time, event_time, end_time,
-             display_order, is_expanded, section_total, notes, created_at, updated_at)
-            VALUES (:id, :proposal_id, :section_name, :section_type, :section_date, :start_time, :event_time, :end_time,
-                    :display_order, :is_expanded, :section_total, :notes, :created_at, :updated_at)
+            (id, proposal_id, section_name, section_type, display_order, is_expanded, section_total, notes, created_at, updated_at)
+            VALUES (:id, :proposal_id, :section_name, :section_type, :display_order, :is_expanded, :section_total, :notes, :created_at, :updated_at)
         """), {
             "id": section['id'],
             "proposal_id": PROPOSAL_ID,
             "section_name": section['section_name'],
             "section_type": section['section_type'],
-            "section_date": section['section_date'],
-            "start_time": section.get('start_time'),
-            "event_time": section.get('event_time'),
-            "end_time": section.get('end_time'),
             "display_order": section['display_order'],
             "is_expanded": True,
             "section_total": Decimal(section['section_total']),
