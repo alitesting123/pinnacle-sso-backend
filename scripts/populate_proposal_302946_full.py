@@ -84,10 +84,11 @@ def add_missing_line_items_to_existing_section(conn, section_id):
     for item in missing_items:
         conn.execute(text("""
             INSERT INTO proposal_line_items
-            (id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
-            VALUES (:id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
+            (id, proposal_id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
+            VALUES (:id, :proposal_id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
         """), {
             "id": str(uuid.uuid4()),
+            "proposal_id": PROPOSAL_ID,
             "section_id": section_id,
             "description": item[0],
             "quantity": item[1],
@@ -426,10 +427,11 @@ def create_line_items_for_ballroom_days(conn, section_ids):
             for item in ballroom_items:
                 conn.execute(text("""
                     INSERT INTO proposal_line_items
-                    (id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
-                    VALUES (:id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
+                    (id, proposal_id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
+                    VALUES (:id, :proposal_id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
                 """), {
                     "id": str(uuid.uuid4()),
+                    "proposal_id": PROPOSAL_ID,
                     "section_id": section_ids[section_key],
                     "description": item[0],
                     "quantity": item[1],
@@ -453,10 +455,11 @@ def create_line_items_for_ballroom_days(conn, section_ids):
             for item in ballroom_day2_items:
                 conn.execute(text("""
                     INSERT INTO proposal_line_items
-                    (id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
-                    VALUES (:id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
+                    (id, proposal_id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
+                    VALUES (:id, :proposal_id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
                 """), {
                     "id": str(uuid.uuid4()),
+                    "proposal_id": PROPOSAL_ID,
                     "section_id": section_ids[section_key],
                     "description": item[0],
                     "quantity": item[1],
@@ -493,10 +496,11 @@ def create_line_items_for_ballroom_set_days(conn, section_ids):
             for item in rb1_items:
                 conn.execute(text("""
                     INSERT INTO proposal_line_items
-                    (id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
-                    VALUES (:id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
+                    (id, proposal_id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
+                    VALUES (:id, :proposal_id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
                 """), {
                     "id": str(uuid.uuid4()),
+                    "proposal_id": PROPOSAL_ID,
                     "section_id": section_ids[section_key],
                     "description": item[0],
                     "quantity": item[1],
@@ -526,10 +530,11 @@ def create_line_items_for_palmetto_rooms(conn, section_ids):
             for item in palmetto_set_items:
                 conn.execute(text("""
                     INSERT INTO proposal_line_items
-                    (id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
-                    VALUES (:id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
+                    (id, proposal_id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
+                    VALUES (:id, :proposal_id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
                 """), {
                     "id": str(uuid.uuid4()),
+                    "proposal_id": PROPOSAL_ID,
                     "section_id": section_ids[section_key],
                     "description": item[0],
                     "quantity": item[1],
@@ -580,10 +585,11 @@ def create_line_items_for_palmetto_rooms(conn, section_ids):
             for item in palmetto_day1_items:
                 conn.execute(text("""
                     INSERT INTO proposal_line_items
-                    (id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
-                    VALUES (:id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
+                    (id, proposal_id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
+                    VALUES (:id, :proposal_id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
                 """), {
                     "id": str(uuid.uuid4()),
+                    "proposal_id": PROPOSAL_ID,
                     "section_id": section_ids[section_key],
                     "description": item[0],
                     "quantity": item[1],
@@ -606,10 +612,11 @@ def create_line_items_for_palmetto_rooms(conn, section_ids):
             for item in palmetto_day1_items:
                 conn.execute(text("""
                     INSERT INTO proposal_line_items
-                    (id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
-                    VALUES (:id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
+                    (id, proposal_id, section_id, description, quantity, duration, unit_price, discount, subtotal, category, notes, created_at, updated_at)
+                    VALUES (:id, :proposal_id, :section_id, :description, :quantity, :duration, :unit_price, :discount, :subtotal, :category, :notes, :created_at, :updated_at)
                 """), {
                     "id": str(uuid.uuid4()),
+                    "proposal_id": PROPOSAL_ID,
                     "section_id": section_ids[section_key],
                     "description": item[0],
                     "quantity": item[1],
