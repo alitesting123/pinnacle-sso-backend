@@ -731,6 +731,37 @@ def create_labor_items(conn):
     ]
 
     for item in labor_items:
+        # Calculate hourly_rate if not provided
+        quantity = item[2]
+        regular_hours = Decimal(item[6]) if item[6] else None
+        hourly_rate = Decimal(item[7]) if item[7] else None
+        subtotal = Decimal(item[9])
+
+        # If hourly_rate is None, calculate it from subtotal and hours
+        if hourly_rate is None:
+            if regular_hours and quantity:
+                # Calculate from regular hours: hourly_rate = subtotal / (quantity * regular_hours)
+                total_labor_hours = quantity * regular_hours
+                hourly_rate = subtotal / total_labor_hours if total_labor_hours > 0 else Decimal("0.00")
+            else:
+                # Calculate hours from time difference
+                from datetime import datetime, time
+                start = datetime.strptime(item[4], "%H:%M:%S").time()
+                end = datetime.strptime(item[5], "%H:%M:%S").time()
+
+                # Calculate time difference in hours
+                start_minutes = start.hour * 60 + start.minute
+                end_minutes = end.hour * 60 + end.minute
+                hours_diff = Decimal((end_minutes - start_minutes) / 60)
+
+                if hours_diff > 0 and quantity:
+                    total_labor_hours = quantity * hours_diff
+                    hourly_rate = subtotal / total_labor_hours if total_labor_hours > 0 else Decimal("0.00")
+                    regular_hours = hours_diff
+                else:
+                    hourly_rate = Decimal("0.00")
+                    regular_hours = Decimal("0.00")
+
         conn.execute(text("""
             INSERT INTO proposal_labor
             (id, proposal_id, task_name, quantity, labor_date, start_time, end_time, regular_hours, hourly_rate, overtime_hours, subtotal, notes, display_order)
@@ -743,10 +774,10 @@ def create_labor_items(conn):
             "labor_date": item[3],
             "start_time": item[4],
             "end_time": item[5],
-            "regular_hours": Decimal(item[6]) if item[6] else None,
-            "hourly_rate": Decimal(item[7]) if item[7] else None,
-            "overtime_hours": Decimal(item[8]) if item[8] else None,
-            "subtotal": Decimal(item[9]),
+            "regular_hours": regular_hours,
+            "hourly_rate": hourly_rate,
+            "overtime_hours": Decimal(item[8]) if item[8] else Decimal("0.00"),
+            "subtotal": subtotal,
             "notes": item[10],
             "display_order": item[11]
         })
