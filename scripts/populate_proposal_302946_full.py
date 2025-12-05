@@ -110,7 +110,7 @@ def create_new_sections(conn):
     sections_data = [
         # Royal Ballroom 1 - Day 1 and Day 2
         {
-            "id": "new-section-rb1-day1",
+            "key": "new-section-rb1-day1",  # Friendly key for referencing
             "section_name": "Royal Ballroom 1 | Day 1/2 | 3.14.2026",
             "section_type": "General Session",
             "section_date": "2026-03-14",
@@ -122,7 +122,7 @@ def create_new_sections(conn):
             "notes": "Saturday, March 14 8:00 AM – 5:30 PM. Techs report one hour prior."
         },
         {
-            "id": "new-section-rb1-day2",
+            "key": "new-section-rb1-day2",
             "section_name": "Royal Ballroom 1 | Day 2/2 | 3.15.2026",
             "section_type": "General Session",
             "section_date": "2026-03-15",
@@ -136,7 +136,7 @@ def create_new_sections(conn):
 
         # Royal Ballroom 2 - Set, Day 1, Day 2
         {
-            "id": "new-section-rb2-set",
+            "key": "new-section-rb2-set",
             "section_name": "Royal Ballroom 2 | Set Day | 3.13.2026",
             "section_type": "General Session",
             "section_date": "2026-03-13",
@@ -148,7 +148,7 @@ def create_new_sections(conn):
             "notes": "Identical setup to Royal Ballroom 1"
         },
         {
-            "id": "new-section-rb2-day1",
+            "key": "new-section-rb2-day1",
             "section_name": "Royal Ballroom 2 | Day 1/2 | 3.14.2026",
             "section_type": "General Session",
             "section_date": "2026-03-14",
@@ -160,7 +160,7 @@ def create_new_sections(conn):
             "notes": "Saturday, March 14 8:00 AM – 5:30 PM. Techs report one hour prior."
         },
         {
-            "id": "new-section-rb2-day2",
+            "key": "new-section-rb2-day2",
             "section_name": "Royal Ballroom 2 | Day 2/2 | 3.15.2026",
             "section_type": "General Session",
             "section_date": "2026-03-15",
@@ -174,7 +174,7 @@ def create_new_sections(conn):
 
         # Royal Ballroom 3/4 - Set, Day 1, Day 2
         {
-            "id": "new-section-rb34-set",
+            "key": "new-section-rb34-set",
             "section_name": "Royal Ballroom 3/4 | Set Day | 3.13.2026",
             "section_type": "General Session",
             "section_date": "2026-03-13",
@@ -186,7 +186,7 @@ def create_new_sections(conn):
             "notes": "Identical setup to Royal Ballroom 1"
         },
         {
-            "id": "new-section-rb34-day1",
+            "key": "new-section-rb34-day1",
             "section_name": "Royal Ballroom 3/4 | Day 1/2 | 3.14.2026",
             "section_type": "General Session",
             "section_date": "2026-03-14",
@@ -198,7 +198,7 @@ def create_new_sections(conn):
             "notes": "Saturday, March 14 8:00 AM – 5:30 PM. Techs report one hour prior."
         },
         {
-            "id": "new-section-rb34-day2",
+            "key": "new-section-rb34-day2",
             "section_name": "Royal Ballroom 3/4 | Day 2/2 | 3.15.2026",
             "section_type": "General Session",
             "section_date": "2026-03-15",
@@ -212,7 +212,7 @@ def create_new_sections(conn):
 
         # Palmetto 5 - Set, Day 1, Day 2
         {
-            "id": "new-section-p5-set",
+            "key": "new-section-p5-set",
             "section_name": "Palmetto 5 | Set Day | 3.13.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-13",
@@ -224,7 +224,7 @@ def create_new_sections(conn):
             "notes": "Breakfast, Lunch and Afternoon Sessions. Smaller setup for breakouts."
         },
         {
-            "id": "new-section-p5-day1",
+            "key": "new-section-p5-day1",
             "section_name": "Palmetto 5 | Day 1/2 | 3.14.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-14",
@@ -236,7 +236,7 @@ def create_new_sections(conn):
             "notes": "Saturday, March 14 8:00 AM – 5:00 PM"
         },
         {
-            "id": "new-section-p5-day2",
+            "key": "new-section-p5-day2",
             "section_name": "Palmetto 5 | Day 2/2 | 3.15.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-15",
@@ -250,7 +250,7 @@ def create_new_sections(conn):
 
         # Palmetto 6 - Set, Day 1, Day 2
         {
-            "id": "new-section-p6-set",
+            "key": "new-section-p6-set",
             "section_name": "Palmetto 6 | Set Day | 3.13.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-13",
@@ -262,7 +262,7 @@ def create_new_sections(conn):
             "notes": "Identical setup to Palmetto 5"
         },
         {
-            "id": "new-section-p6-day1",
+            "key": "new-section-p6-day1",
             "section_name": "Palmetto 6 | Day 1/2 | 3.14.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-14",
@@ -274,7 +274,7 @@ def create_new_sections(conn):
             "notes": "Saturday, March 14 8:00 AM – 5:00 PM"
         },
         {
-            "id": "new-section-p6-day2",
+            "key": "new-section-p6-day2",
             "section_name": "Palmetto 6 | Day 2/2 | 3.15.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-15",
@@ -288,7 +288,7 @@ def create_new_sections(conn):
 
         # Palmetto 7 - Set, Day 1, Day 2
         {
-            "id": "new-section-p7-set",
+            "key": "new-section-p7-set",
             "section_name": "Palmetto 7 | Set Day | 3.13.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-13",
@@ -300,7 +300,7 @@ def create_new_sections(conn):
             "notes": "Identical setup to Palmetto 5"
         },
         {
-            "id": "new-section-p7-day1",
+            "key": "new-section-p7-day1",
             "section_name": "Palmetto 7 | Day 1/2 | 3.14.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-14",
@@ -312,7 +312,7 @@ def create_new_sections(conn):
             "notes": "Saturday, March 14 8:00 AM – 5:00 PM"
         },
         {
-            "id": "new-section-p7-day2",
+            "key": "new-section-p7-day2",
             "section_name": "Palmetto 7 | Day 2/2 | 3.15.2026",
             "section_type": "Breakout Session",
             "section_date": "2026-03-15",
@@ -328,12 +328,15 @@ def create_new_sections(conn):
     section_ids = {}
 
     for section in sections_data:
+        # Generate a proper UUID for this section
+        section_uuid = str(uuid.uuid4())
+
         conn.execute(text("""
             INSERT INTO proposal_sections
             (id, proposal_id, section_name, section_type, display_order, is_expanded, section_total, notes, created_at, updated_at)
             VALUES (:id, :proposal_id, :section_name, :section_type, :display_order, :is_expanded, :section_total, :notes, :created_at, :updated_at)
         """), {
-            "id": section['id'],
+            "id": section_uuid,
             "proposal_id": PROPOSAL_ID,
             "section_name": section['section_name'],
             "section_type": section['section_type'],
@@ -345,7 +348,8 @@ def create_new_sections(conn):
             "updated_at": datetime.now()
         })
 
-        section_ids[section['id']] = section['id']
+        # Map the friendly key to the UUID
+        section_ids[section['key']] = section_uuid
 
     print(f"✅ Created {len(sections_data)} new sections")
     return section_ids
@@ -665,7 +669,7 @@ def create_timeline_events(conn):
             (id, proposal_id, event_date, start_time, end_time, title, location, cost, display_order)
             VALUES (:id, :proposal_id, :event_date, :start_time, :end_time, :title, :location, :cost, :display_order)
         """), {
-            "id": event[0],
+            "id": str(uuid.uuid4()),  # Generate UUID instead of using string
             "proposal_id": PROPOSAL_ID,
             "event_date": event[1],
             "start_time": event[2],
@@ -732,7 +736,7 @@ def create_labor_items(conn):
             (id, proposal_id, task_name, quantity, labor_date, start_time, end_time, regular_hours, hourly_rate, overtime_hours, subtotal, notes, display_order)
             VALUES (:id, :proposal_id, :task_name, :quantity, :labor_date, :start_time, :end_time, :regular_hours, :hourly_rate, :overtime_hours, :subtotal, :notes, :display_order)
         """), {
-            "id": item[0],
+            "id": str(uuid.uuid4()),  # Generate UUID instead of using string
             "proposal_id": PROPOSAL_ID,
             "task_name": item[1],
             "quantity": item[2],
