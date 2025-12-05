@@ -477,7 +477,7 @@ def create_line_items_for_ballroom_set_days(conn, section_ids):
 
     # Get the line items from RB1 Set Day
     result = conn.execute(text("""
-        SELECT description, quantity, duration, unit_price, discount, subtotal, category, notes
+        SELECT pli.description, pli.quantity, pli.duration, pli.unit_price, pli.discount, pli.subtotal, pli.category, pli.notes
         FROM proposal_line_items pli
         JOIN proposal_sections ps ON pli.section_id = ps.id
         WHERE ps.proposal_id = :proposal_id
@@ -777,6 +777,7 @@ def main():
 
     engine = None
     conn = None
+    trans = None
 
     try:
         engine = get_db_engine()
